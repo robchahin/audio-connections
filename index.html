@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Audio Connections 2 — by Corey Farwell</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; }
   body {
@@ -74,7 +77,7 @@
     background: linear-gradient(180deg, #3a3a3a 0%, #1d1d1d 100%);
     border: 2px solid #0e0e0e;
     border-radius: 6px;
-    padding: 8px 8px;
+    padding: 38px 8px 8px 8px;
     text-align: center;
     transition: all 0.15s;
     min-height: 140px;
@@ -133,28 +136,37 @@
     background-color: #ddd5c0;
     border: 1px solid #6a5a3a;
     color: #1a1a1a;
-    font-size: 11px;
-    font-weight: 700;
+    font-size: 13px;
+    font-weight: 400;
     text-align: center;
     padding: 4px 6px;
     border-radius: 2px;
-    width: 100%;
-    font-family: 'Courier New', ui-monospace, monospace;
+    font-family: 'Special Elite', 'Courier New', ui-monospace, monospace;
     letter-spacing: 0.3px;
-    position: relative;
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    right: 8px;
     z-index: 1;
     box-shadow: 0 1px 2px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(255,255,255,0.4);
+    transition: left 0.18s ease, right 0.18s ease, padding 0.18s ease, font-size 0.18s ease, background-color 0.15s, border-color 0.15s, box-shadow 0.15s;
     background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="%23666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>');
     background-repeat: no-repeat;
     background-position: right 5px center;
   }
-  .tile-label-input::placeholder { color: #999; font-weight: 700; }
+  .tile-label-input::placeholder { color: #999; font-weight: 400; }
   .tile-label-input:hover { background-color: #e8e0cb; border-color: #4a3a1a; }
   .tile-label-input:focus {
     border-color: #4a9eff;
     background-color: #f4eeda;
     outline: none;
     background-image: none;
+    left: -30%;
+    right: -30%;
+    font-size: 13px;
+    padding: 8px 10px;
+    z-index: 20;
+    box-shadow: 0 6px 14px rgba(0,0,0,0.65), inset 0 0 0 1px rgba(255,255,255,0.5);
   }
   .tile-label-input:not(:placeholder-shown) {
     background-image: none;
@@ -705,9 +717,16 @@ function render() {
     btn.addEventListener('click', () => togglePlay(parseInt(btn.dataset.id))));
   document.querySelectorAll('.select-btn').forEach(btn =>
     btn.addEventListener('click', () => toggleSelect(parseInt(btn.dataset.select))));
-  document.querySelectorAll('.tile-label-input').forEach(input =>
+  document.querySelectorAll('.tile-label-input').forEach(input => {
     input.addEventListener('input', e =>
-      notes.set(parseInt(input.dataset.note), e.target.value)));
+      notes.set(parseInt(input.dataset.note), e.target.value));
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === 'Escape') {
+        e.preventDefault();
+        input.blur();
+      }
+    });
+  });
 
   updateSubmit();
   renderSolved();
