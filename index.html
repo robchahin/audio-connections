@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Audio Connections — Spike</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #1a1a1a;
+    color: #f0f0f0;
+    margin: 0;
+    padding: 24px;
+    min-height: 100vh;
+  }
+  h1 { margin: 0 0 4px; font-size: 28px; }
+  .subtitle { color: #888; margin-bottom: 20px; font-size: 14px; }
+  #status {
+    max-width: 720px;
+    margin: 0 auto 16px;
+    color: #ffaa55;
+    min-height: 20px;
+    text-align: center;
+    font-size: 14px;
+  }
+  #grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    max-width: 720px;
+    margin: 0 auto 20px;
+  }
+  .tile {
+    background: #2a2a2a;
+    border: 2px solid #333;
+    border-radius: 8px;
+    padding: 10px 8px;
+    text-align: center;
+    transition: all 0.15s;
+    min-height: 150px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    gap: 4px;
+  }
+  .note-input {
+    background: #1a1a1a;
+    border: 1px solid #444;
+    color: #f0f0f0;
+    border-radius: 4px;
+    padding: 4px 6px;
+    font-size: 11px;
+    width: 100%;
+    font-family: inherit;
+  }
+  .note-input:focus {
+    border-color: #4a9eff;
+    outline: none;
+  }
+  .tile.selected {
+    border-color: #4a9eff;
+    background: #1e3a5f;
+  }
+  .tile.solved { opacity: 0.45; pointer-events: none; }
+  .tile-label { font-size: 12px; color: #888; font-weight: 600; }
+  .play-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: #4a9eff;
+    border: none;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .play-btn:hover { background: #5aaeff; }
+  .play-btn.playing { background: #ff6b6b; }
+  .play-btn:disabled { background: #555; cursor: not-allowed; }
+  .select-btn {
+    background: transparent;
+    border: 1px solid #555;
+    color: #ccc;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    width: 100%;
+  }
+  .tile.selected .select-btn {
+    background: #4a9eff;
+    border-color: #4a9eff;
+    color: white;
+  }
+  .controls {
+    max-width: 720px;
+    margin: 0 auto;
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+  }
+  button.action {
+    background: #4a9eff;
+    border: none;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  button.action:disabled { background: #444; cursor: not-allowed; }
+  button.secondary {
+    background: transparent;
+    border: 1px solid #555;
+    color: #ccc;
+  }
+  #solved { max-width: 720px; margin: 0 auto 16px; }
+  .solved-row {
+    background: #2a4a2a;
+    border-left: 4px solid #5fcf5f;
+    padding: 10px 14px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+  }
+  .solved-theme { font-weight: 600; }
+  .solved-tracks { color: #aaa; font-size: 13px; margin-top: 4px; }
+  .mistakes-row {
+    max-width: 720px;
+    margin: 0 auto 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: #888;
+  }
+  .mistakes-dots { display: flex; gap: 6px; }
+  .mistake-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #444;
+  }
+  .mistake-dot.used { background: #ff6b6b; }
+  #end-panel {
+    max-width: 720px;
+    margin: 24px auto 0;
+    background: #2a2a2a;
+    border: 1px solid #444;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+  }
+  #end-panel h2 { margin: 0 0 8px; font-size: 22px; }
+  #end-panel.win h2 { color: #5fcf5f; }
+  #end-panel.loss h2 { color: #ff6b6b; }
+  .share-text {
+    background: #1a1a1a;
+    border: 1px solid #444;
+    border-radius: 4px;
+    padding: 14px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 16px;
+    line-height: 1.5;
+    text-align: left;
+    white-space: pre;
+    margin: 14px auto;
+    display: inline-block;
+    user-select: all;
+  }
+  .copy-btn {
+    background: #4a9eff;
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    display: block;
+    margin: 0 auto;
+  }
+  .copy-btn:hover { background: #5aaeff; }
+  .copy-btn.copied { background: #5fcf5f; }
+</style>
+</head>
+<body>
+  <h1>Audio Connections</h1>
+  <div class="subtitle">Find four groups of four. Tap to play, "Select" to group.</div>
+  <div class="mistakes-row">
+    Mistakes remaining:
+    <div class="mistakes-dots" id="mistakes-dots"></div>
+  </div>
+  <div id="status">Loading previews from iTunes…</div>
+  <div id="solved"></div>
+  <div id="grid"></div>
+  <div class="controls">
+    <button class="action secondary" id="deselect">Deselect</button>
+    <button class="action" id="submit" disabled>Submit (0/4)</button>
+  </div>
+  <div id="end-panel" style="display: none;"></div>
+
+<script>
+const puzzle = [
+  {
+    theme: "Colors in the title",
+    queries: [
+      "Yellow Submarine Beatles",
+      "Black Hole Sun Soundgarden",
+      "Purple Rain Prince",
+      "Blue Da Ba Dee Eiffel 65"
+    ]
+  },
+  {
+    theme: "One-word titles",
+    queries: [
+      "Hello Adele",
+      "Believer Imagine Dragons",
+      "Halo Beyonce",
+      "Roar Katy Perry"
+    ]
+  },
+  {
+    theme: "Songs about cities",
+    queries: [
+      "New York New York Frank Sinatra",
+      "Viva Las Vegas Elvis Presley",
+      "London Calling The Clash",
+      "Empire State of Mind Jay-Z Alicia Keys"
+    ]
+  },
+  {
+    theme: "Weather in the title",
+    queries: [
+      "Here Comes the Sun Beatles",
+      "Riders on the Storm Doors",
+      "Have You Ever Seen the Rain CCR",
+      "November Rain Guns N Roses"
+    ]
+  }
+];
+
+async function fetchPreview(term) {
+  const url = `https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=song&limit=1`;
+  const r = await fetch(url);
+  const data = await r.json();
+  return data.results[0]?.previewUrl ?? null;
+}
+
+let tracks = [];
+let selected = new Set();
+let solvedThemes = new Set();
+let notes = new Map();
+let currentlyPlaying = null;
+let currentAudio = null;
+let mistakes = 0;
+let guessHistory = [];
+let gameOver = false;
+const MAX_MISTAKES = 4;
+const THEME_EMOJI = ['🟨', '🟩', '🟦', '🟪'];
+
+function escapeHtml(s) {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+async function init() {
+  const status = document.getElementById('status');
+  const all = [];
+  for (let t = 0; t < puzzle.length; t++) {
+    for (const q of puzzle[t].queries) all.push({ themeIdx: t, query: q });
+  }
+  const previews = await Promise.all(all.map(x => fetchPreview(x.query)));
+  tracks = all
+    .map((x, i) => ({ id: i, themeIdx: x.themeIdx, previewUrl: previews[i] }))
+    .filter(t => t.previewUrl);
+
+  status.textContent = tracks.length < 16
+    ? `Only got ${tracks.length}/16 previews — some queries failed.`
+    : '';
+  tracks = shuffle(tracks);
+  render();
+}
+
+function render() {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  tracks.forEach((track, idx) => {
+    const tile = document.createElement('div');
+    tile.className = 'tile';
+    if (selected.has(track.id)) tile.classList.add('selected');
+    if (solvedThemes.has(track.themeIdx)) tile.classList.add('solved');
+    tile.innerHTML = `
+      <div class="tile-label">Track ${idx + 1}</div>
+      <button class="play-btn" data-id="${track.id}">▶</button>
+      <input class="note-input" type="text" placeholder="Notes"
+        data-note="${track.id}"
+        value="${escapeHtml(notes.get(track.id) || '')}">
+      <button class="select-btn" data-select="${track.id}">
+        ${selected.has(track.id) ? 'Selected' : 'Select'}
+      </button>`;
+    grid.appendChild(tile);
+  });
+
+  document.querySelectorAll('.play-btn').forEach(btn =>
+    btn.addEventListener('click', () => togglePlay(parseInt(btn.dataset.id))));
+  document.querySelectorAll('.select-btn').forEach(btn =>
+    btn.addEventListener('click', () => toggleSelect(parseInt(btn.dataset.select))));
+  document.querySelectorAll('.note-input').forEach(input =>
+    input.addEventListener('input', e =>
+      notes.set(parseInt(input.dataset.note), e.target.value)));
+
+  const submit = document.getElementById('submit');
+  if (gameOver) {
+    submit.textContent = solvedThemes.size === puzzle.length ? 'Solved' : 'Game over';
+    submit.disabled = true;
+  } else {
+    submit.textContent = `Submit (${selected.size}/4)`;
+    submit.disabled = selected.size !== 4;
+  }
+  renderSolved();
+  updatePlayButtons();
+  renderMistakes();
+  renderEndPanel();
+}
+
+function renderMistakes() {
+  const dots = document.getElementById('mistakes-dots');
+  dots.innerHTML = '';
+  for (let i = 0; i < MAX_MISTAKES; i++) {
+    const d = document.createElement('div');
+    d.className = 'mistake-dot' + (i < mistakes ? ' used' : '');
+    dots.appendChild(d);
+  }
+}
+
+function buildShareText() {
+  const won = solvedThemes.size === puzzle.length && mistakes < MAX_MISTAKES;
+  const lines = [
+    'Audio Connections',
+    won ? `Solved with ${mistakes}/${MAX_MISTAKES} mistakes` : 'Did not solve',
+    '',
+  ];
+  for (const guess of guessHistory) {
+    lines.push(guess.themes.map(t => THEME_EMOJI[t]).join(''));
+  }
+  return lines.join('\n');
+}
+
+function renderEndPanel() {
+  const panel = document.getElementById('end-panel');
+  if (!gameOver) {
+    panel.style.display = 'none';
+    panel.innerHTML = '';
+    return;
+  }
+  const won = solvedThemes.size === puzzle.length && mistakes < MAX_MISTAKES;
+  panel.className = won ? 'win' : 'loss';
+  panel.style.display = 'block';
+  const shareText = buildShareText();
+  panel.innerHTML = `
+    <h2>${won ? 'Solved!' : 'Game over'}</h2>
+    <div class="share-text">${shareText}</div>
+    <button class="copy-btn" id="copy-btn">Copy result</button>
+  `;
+  document.getElementById('copy-btn').addEventListener('click', async () => {
+    const btn = document.getElementById('copy-btn');
+    try {
+      await navigator.clipboard.writeText(shareText);
+      btn.textContent = 'Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = 'Copy result';
+        btn.classList.remove('copied');
+      }, 1500);
+    } catch (e) {
+      btn.textContent = 'Copy failed — select text manually';
+    }
+  });
+}
+
+function renderSolved() {
+  const div = document.getElementById('solved');
+  div.innerHTML = '';
+  for (const themeIdx of solvedThemes) {
+    const row = document.createElement('div');
+    row.className = 'solved-row';
+    row.innerHTML = `<div class="solved-theme">${puzzle[themeIdx].theme}</div>
+      <div class="solved-tracks">${puzzle[themeIdx].queries.join(' • ')}</div>`;
+    div.appendChild(row);
+  }
+}
+
+function togglePlay(id) {
+  const track = tracks.find(t => t.id === id);
+  if (!track) return;
+  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  if (currentlyPlaying === id) {
+    currentlyPlaying = null;
+    updatePlayButtons();
+    return;
+  }
+  currentAudio = new Audio(track.previewUrl);
+  currentAudio.play();
+  currentlyPlaying = id;
+  currentAudio.addEventListener('ended', () => {
+    currentlyPlaying = null;
+    updatePlayButtons();
+  });
+  updatePlayButtons();
+}
+
+function updatePlayButtons() {
+  document.querySelectorAll('.play-btn').forEach(btn => {
+    const id = parseInt(btn.dataset.id);
+    if (id === currentlyPlaying) {
+      btn.classList.add('playing');
+      btn.textContent = '⏸';
+    } else {
+      btn.classList.remove('playing');
+      btn.textContent = '▶';
+    }
+  });
+}
+
+function toggleSelect(id) {
+  if (gameOver) return;
+  if (selected.has(id)) selected.delete(id);
+  else if (selected.size < 4) selected.add(id);
+  render();
+}
+
+document.getElementById('deselect').addEventListener('click', () => {
+  selected.clear();
+  render();
+});
+
+document.getElementById('submit').addEventListener('click', () => {
+  if (gameOver) return;
+  const ids = [...selected];
+  const themes = ids.map(id => tracks.find(t => t.id === id).themeIdx);
+  const counts = {};
+  themes.forEach(t => counts[t] = (counts[t] || 0) + 1);
+  const maxCount = Math.max(...Object.values(counts));
+  const correct = maxCount === 4;
+  guessHistory.push({ themes: [...themes], correct });
+
+  const status = document.getElementById('status');
+  if (correct) {
+    solvedThemes.add(themes[0]);
+    selected.clear();
+    if (solvedThemes.size === puzzle.length) {
+      gameOver = true;
+      status.textContent = 'All four solved.';
+    } else {
+      status.textContent = `Solved: ${puzzle[themes[0]].theme}`;
+    }
+  } else {
+    mistakes++;
+    if (mistakes >= MAX_MISTAKES) {
+      gameOver = true;
+      for (let i = 0; i < puzzle.length; i++) solvedThemes.add(i);
+      selected.clear();
+      status.textContent = 'Out of mistakes.';
+    } else if (maxCount === 3) {
+      status.textContent = 'One away…';
+      setTimeout(() => {
+        if (status.textContent === 'One away…') status.textContent = '';
+      }, 2500);
+    } else {
+      status.textContent = 'Not a group. Try again.';
+    }
+  }
+  render();
+});
+
+init();
+</script>
+</body>
+</html>
