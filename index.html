@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Audio Connections — Spike</title>
+<title>Audio Connections 1 — by Corey Farwell</title>
 <style>
   * { box-sizing: border-box; }
   body {
@@ -14,7 +14,8 @@
     padding: 24px;
     min-height: 100vh;
   }
-  h1 { margin: 0 0 4px; font-size: 28px; }
+  h1 { margin: 0 0 2px; font-size: 28px; }
+  .byline { color: #aaa; font-size: 13px; margin-bottom: 10px; }
   .subtitle { color: #888; margin-bottom: 20px; font-size: 14px; }
   #status {
     max-width: 720px;
@@ -45,26 +46,30 @@
     align-items: center;
     gap: 4px;
   }
-  .note-input {
-    background: #1a1a1a;
-    border: 1px solid #444;
-    color: #f0f0f0;
-    border-radius: 4px;
-    padding: 4px 6px;
-    font-size: 11px;
-    width: 100%;
-    font-family: inherit;
-  }
-  .note-input:focus {
-    border-color: #4a9eff;
-    outline: none;
-  }
   .tile.selected {
     border-color: #4a9eff;
     background: #1e3a5f;
   }
   .tile.solved { opacity: 0.45; pointer-events: none; }
-  .tile-label { font-size: 12px; color: #888; font-weight: 600; }
+  .tile-label-input {
+    background: transparent;
+    border: 1px solid transparent;
+    color: #f0f0f0;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    padding: 4px 6px;
+    border-radius: 4px;
+    width: 100%;
+    font-family: inherit;
+  }
+  .tile-label-input::placeholder { color: #888; font-weight: 600; }
+  .tile-label-input:hover { border-color: #444; }
+  .tile-label-input:focus {
+    border-color: #4a9eff;
+    background: #1a1a1a;
+    outline: none;
+  }
   .play-btn {
     width: 42px;
     height: 42px;
@@ -128,7 +133,10 @@
     border-radius: 4px;
   }
   .solved-theme { font-weight: 600; }
-  .solved-tracks { color: #aaa; font-size: 13px; margin-top: 4px; }
+  .solved-tracks { font-size: 13px; margin-top: 4px; }
+  .solved-track-item { display: block; margin-top: 2px; }
+  .solved-title { color: #f0f0f0; }
+  .solved-artist { color: #888; }
   .mistakes-row {
     max-width: 720px;
     margin: 0 auto 12px;
@@ -190,7 +198,8 @@
 </style>
 </head>
 <body>
-  <h1>Audio Connections</h1>
+  <h1>Audio Connections 1</h1>
+  <div class="byline">by Corey Farwell</div>
   <div class="subtitle">Find four groups of four. Tap to play, "Select" to group.</div>
   <div class="mistakes-row">
     Mistakes remaining:
@@ -198,58 +207,64 @@
   </div>
   <div id="status">Loading previews from iTunes…</div>
   <div id="solved"></div>
+  <div id="end-panel" style="display: none;"></div>
   <div id="grid"></div>
   <div class="controls">
     <button class="action secondary" id="deselect">Deselect</button>
     <button class="action" id="submit" disabled>Submit (0/4)</button>
   </div>
-  <div id="end-panel" style="display: none;"></div>
 
 <script>
 const puzzle = [
   {
-    theme: "Colors in the title",
+    theme: "Bands with repeated names",
     queries: [
-      "Yellow Submarine Beatles",
-      "Black Hole Sun Soundgarden",
-      "Purple Rain Prince",
-      "Blue Da Ba Dee Eiffel 65"
+      "It's My Life Talk Talk",
+      "Hungry Like the Wolf Duran Duran",
+      "Maps Yeah Yeah Yeahs",
+      "We Got the Beat Go-Go's"
     ]
   },
   {
-    theme: "One-word titles",
+    theme: "Heaven in the title",
     queries: [
-      "Hello Adele",
-      "Believer Imagine Dragons",
-      "Halo Beyonce",
-      "Roar Katy Perry"
+      "Just Like Heaven The Cure",
+      "Stairway to Heaven Led Zeppelin",
+      "Tears in Heaven Eric Clapton",
+      "Heaven Is a Place on Earth Belinda Carlisle"
     ]
   },
   {
-    theme: "Songs about cities",
+    theme: "Canadian artists",
     queries: [
-      "New York New York Frank Sinatra",
-      "Viva Las Vegas Elvis Presley",
-      "London Calling The Clash",
-      "Empire State of Mind Jay-Z Alicia Keys"
+      "My Happy Ending Avril Lavigne",
+      "Baby Justin Bieber",
+      "Summer of '69 Bryan Adams",
+      "Tom Sawyer Rush"
     ]
   },
   {
-    theme: "Weather in the title",
+    theme: "Bands of all siblings",
     queries: [
-      "Here Comes the Sun Beatles",
-      "Riders on the Storm Doors",
-      "Have You Ever Seen the Rain CCR",
-      "November Rain Guns N Roses"
+      "MMMBop Hanson",
+      "ABC Jackson 5",
+      "How Deep Is Your Love Bee Gees",
+      "We Are Family Sister Sledge"
     ]
   }
 ];
 
-async function fetchPreview(term) {
+async function fetchTrack(term) {
   const url = `https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=song&limit=1`;
   const r = await fetch(url);
   const data = await r.json();
-  return data.results[0]?.previewUrl ?? null;
+  const result = data.results[0];
+  if (!result?.previewUrl) return null;
+  return {
+    previewUrl: result.previewUrl,
+    trackName: result.trackName,
+    artistName: result.artistName,
+  };
 }
 
 let tracks = [];
@@ -260,6 +275,7 @@ let currentlyPlaying = null;
 let currentAudio = null;
 let mistakes = 0;
 let guessHistory = [];
+let guessSignatures = new Set();
 let gameOver = false;
 const MAX_MISTAKES = 4;
 const THEME_EMOJI = ['🟨', '🟩', '🟦', '🟪'];
@@ -270,6 +286,17 @@ function escapeHtml(s) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+let statusTimeout = null;
+function setStatus(text) {
+  const status = document.getElementById('status');
+  status.textContent = text;
+  if (statusTimeout) clearTimeout(statusTimeout);
+  statusTimeout = setTimeout(() => {
+    if (status.textContent === text) status.textContent = '';
+    statusTimeout = null;
+  }, 2500);
 }
 
 function shuffle(arr) {
@@ -287,10 +314,10 @@ async function init() {
   for (let t = 0; t < puzzle.length; t++) {
     for (const q of puzzle[t].queries) all.push({ themeIdx: t, query: q });
   }
-  const previews = await Promise.all(all.map(x => fetchPreview(x.query)));
+  const trackData = await Promise.all(all.map(x => fetchTrack(x.query)));
   tracks = all
-    .map((x, i) => ({ id: i, themeIdx: x.themeIdx, previewUrl: previews[i] }))
-    .filter(t => t.previewUrl);
+    .map((x, i) => trackData[i] ? { id: i, themeIdx: x.themeIdx, ...trackData[i] } : null)
+    .filter(t => t !== null);
 
   status.textContent = tracks.length < 16
     ? `Only got ${tracks.length}/16 previews — some queries failed.`
@@ -308,11 +335,11 @@ function render() {
     if (selected.has(track.id)) tile.classList.add('selected');
     if (solvedThemes.has(track.themeIdx)) tile.classList.add('solved');
     tile.innerHTML = `
-      <div class="tile-label">Track ${idx + 1}</div>
-      <button class="play-btn" data-id="${track.id}">▶</button>
-      <input class="note-input" type="text" placeholder="Notes"
+      <input class="tile-label-input" type="text"
+        placeholder="Track ${idx + 1}"
         data-note="${track.id}"
         value="${escapeHtml(notes.get(track.id) || '')}">
+      <button class="play-btn" data-id="${track.id}">▶</button>
       <button class="select-btn" data-select="${track.id}">
         ${selected.has(track.id) ? 'Selected' : 'Select'}
       </button>`;
@@ -323,7 +350,7 @@ function render() {
     btn.addEventListener('click', () => togglePlay(parseInt(btn.dataset.id))));
   document.querySelectorAll('.select-btn').forEach(btn =>
     btn.addEventListener('click', () => toggleSelect(parseInt(btn.dataset.select))));
-  document.querySelectorAll('.note-input').forEach(input =>
+  document.querySelectorAll('.tile-label-input').forEach(input =>
     input.addEventListener('input', e =>
       notes.set(parseInt(input.dataset.note), e.target.value)));
 
@@ -352,12 +379,7 @@ function renderMistakes() {
 }
 
 function buildShareText() {
-  const won = solvedThemes.size === puzzle.length && mistakes < MAX_MISTAKES;
-  const lines = [
-    'Audio Connections',
-    won ? `Solved with ${mistakes}/${MAX_MISTAKES} mistakes` : 'Did not solve',
-    '',
-  ];
+  const lines = ['Audio Connections 1', ''];
   for (const guess of guessHistory) {
     lines.push(guess.themes.map(t => THEME_EMOJI[t]).join(''));
   }
@@ -400,10 +422,17 @@ function renderSolved() {
   const div = document.getElementById('solved');
   div.innerHTML = '';
   for (const themeIdx of solvedThemes) {
+    const themeTracks = tracks.filter(t => t.themeIdx === themeIdx);
+    const trackList = themeTracks.map(t =>
+      `<div class="solved-track-item">
+        <span class="solved-title">${escapeHtml(t.trackName || '?')}</span>
+        <span class="solved-artist">— ${escapeHtml(t.artistName || '?')}</span>
+      </div>`
+    ).join('');
     const row = document.createElement('div');
     row.className = 'solved-row';
-    row.innerHTML = `<div class="solved-theme">${puzzle[themeIdx].theme}</div>
-      <div class="solved-tracks">${puzzle[themeIdx].queries.join(' • ')}</div>`;
+    row.innerHTML = `<div class="solved-theme">${escapeHtml(puzzle[themeIdx].theme)}</div>
+      <div class="solved-tracks">${trackList}</div>`;
     div.appendChild(row);
   }
 }
@@ -455,6 +484,12 @@ document.getElementById('deselect').addEventListener('click', () => {
 document.getElementById('submit').addEventListener('click', () => {
   if (gameOver) return;
   const ids = [...selected];
+  const sig = [...ids].sort((a, b) => a - b).join(',');
+  if (guessSignatures.has(sig)) {
+    setStatus('Already guessed!');
+    return;
+  }
+  guessSignatures.add(sig);
   const themes = ids.map(id => tracks.find(t => t.id === id).themeIdx);
   const counts = {};
   themes.forEach(t => counts[t] = (counts[t] || 0) + 1);
@@ -462,15 +497,14 @@ document.getElementById('submit').addEventListener('click', () => {
   const correct = maxCount === 4;
   guessHistory.push({ themes: [...themes], correct });
 
-  const status = document.getElementById('status');
   if (correct) {
     solvedThemes.add(themes[0]);
     selected.clear();
     if (solvedThemes.size === puzzle.length) {
       gameOver = true;
-      status.textContent = 'All four solved.';
+      setStatus('All four solved.');
     } else {
-      status.textContent = `Solved: ${puzzle[themes[0]].theme}`;
+      setStatus(`Solved: ${puzzle[themes[0]].theme}`);
     }
   } else {
     mistakes++;
@@ -478,14 +512,11 @@ document.getElementById('submit').addEventListener('click', () => {
       gameOver = true;
       for (let i = 0; i < puzzle.length; i++) solvedThemes.add(i);
       selected.clear();
-      status.textContent = 'Out of mistakes.';
+      setStatus('Out of mistakes.');
     } else if (maxCount === 3) {
-      status.textContent = 'One away…';
-      setTimeout(() => {
-        if (status.textContent === 'One away…') status.textContent = '';
-      }, 2500);
+      setStatus('One away…');
     } else {
-      status.textContent = 'Not a group. Try again.';
+      setStatus('Not a group. Try again.');
     }
   }
   render();
