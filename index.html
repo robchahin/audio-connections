@@ -389,17 +389,17 @@
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    background: #333;
+    background: #aaa;
     transition: background 0.3s ease;
   }
   .mistake-dot.used {
-    background: #ff6b6b;
-    animation: dotPulse 0.4s var(--spring);
+    background: #3a3a3a;
+    animation: dotLost 0.5s var(--spring);
   }
-  @keyframes dotPulse {
-    0%   { transform: scale(1); }
-    40%  { transform: scale(1.5); }
-    100% { transform: scale(1); }
+  @keyframes dotLost {
+    0%   { background: #aaa; transform: scale(1); }
+    35%  { background: #ff6b6b; transform: scale(1.5); }
+    100% { background: #3a3a3a; transform: scale(1); }
   }
   #end-panel {
     max-width: 720px;
@@ -880,11 +880,17 @@ function render() {
 
 function renderMistakes() {
   const dots = document.getElementById('mistakes-dots');
-  dots.innerHTML = '';
+  if (dots.children.length !== MAX_MISTAKES) {
+    dots.innerHTML = '';
+    for (let i = 0; i < MAX_MISTAKES; i++) {
+      const d = document.createElement('div');
+      d.className = 'mistake-dot';
+      dots.appendChild(d);
+    }
+  }
   for (let i = 0; i < MAX_MISTAKES; i++) {
-    const d = document.createElement('div');
-    d.className = 'mistake-dot' + (i < mistakes ? ' used' : '');
-    dots.appendChild(d);
+    const shouldBeUsed = i >= MAX_MISTAKES - mistakes;
+    dots.children[i].classList.toggle('used', shouldBeUsed);
   }
 }
 
