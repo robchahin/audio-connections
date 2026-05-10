@@ -88,7 +88,12 @@
     border-color: #4a9eff;
     background: #1e3a5f;
   }
-  .tile.solved { opacity: 0.45; pointer-events: none; }
+  .tile.exiting {
+    opacity: 0;
+    transform: scale(0.85);
+    transition: opacity 0.35s ease, transform 0.35s ease;
+    pointer-events: none;
+  }
   .tile-label-input {
     background: transparent;
     border: 1px solid transparent;
@@ -600,14 +605,26 @@ function renderDaySelector() {
   });
 }
 
+function updateSubmit() {
+  const submit = document.getElementById('submit');
+  if (gameOver) {
+    submit.textContent = solvedThemes.size === puzzle.length ? 'Solved' : 'Game over';
+    submit.disabled = true;
+  } else {
+    submit.textContent = `Submit (${selected.size}/4)`;
+    submit.disabled = selected.size !== 4;
+  }
+}
+
 function render() {
   const grid = document.getElementById('grid');
   grid.innerHTML = '';
-  tracks.forEach((track, idx) => {
+  const visible = tracks.filter(t => !solvedThemes.has(t.themeIdx));
+  visible.forEach((track, idx) => {
     const tile = document.createElement('div');
     tile.className = 'tile';
+    tile.dataset.trackId = track.id;
     if (selected.has(track.id)) tile.classList.add('selected');
-    if (solvedThemes.has(track.themeIdx)) tile.classList.add('solved');
     tile.innerHTML = `
       <input class="tile-label-input" type="text"
         placeholder="Track ${idx + 1}"
@@ -628,14 +645,7 @@ function render() {
     input.addEventListener('input', e =>
       notes.set(parseInt(input.dataset.note), e.target.value)));
 
-  const submit = document.getElementById('submit');
-  if (gameOver) {
-    submit.textContent = solvedThemes.size === puzzle.length ? 'Solved' : 'Game over';
-    submit.disabled = true;
-  } else {
-    submit.textContent = `Submit (${selected.size}/4)`;
-    submit.disabled = selected.size !== 4;
-  }
+  updateSubmit();
   renderSolved();
   updatePlayButtons();
   renderMistakes();
@@ -794,7 +804,10 @@ document.getElementById('submit').addEventListener('click', () => {
   const correct = maxCount === 4;
   guessHistory.push({ themes: [...themes], correct });
 
+  const exitingThemes = new Set();
+
   if (correct) {
+    exitingThemes.add(themes[0]);
     solvedThemes.add(themes[0]);
     selected.clear();
     if (solvedThemes.size === puzzle.length) {
@@ -807,7 +820,10 @@ document.getElementById('submit').addEventListener('click', () => {
     mistakes++;
     if (mistakes >= MAX_MISTAKES) {
       gameOver = true;
-      for (let i = 0; i < puzzle.length; i++) solvedThemes.add(i);
+      for (let i = 0; i < puzzle.length; i++) {
+        if (!solvedThemes.has(i)) exitingThemes.add(i);
+        solvedThemes.add(i);
+      }
       selected.clear();
       setStatus('Out of mistakes.');
     } else if (maxCount === 3) {
@@ -816,7 +832,23 @@ document.getElementById('submit').addEventListener('click', () => {
       setStatus('Not a group. Try again.');
     }
   }
-  render();
+
+  if (exitingThemes.size > 0) {
+    document.querySelectorAll('.tile').forEach(tile => {
+      const id = parseInt(tile.dataset.trackId);
+      const trk = tracks.find(t => t.id === id);
+      if (trk && exitingThemes.has(trk.themeIdx)) {
+        tile.classList.add('exiting');
+      }
+    });
+    renderSolved();
+    renderMistakes();
+    renderEndPanel();
+    updateSubmit();
+    setTimeout(render, 400);
+  } else {
+    render();
+  }
 });
 
 renderDaySelector();
