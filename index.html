@@ -57,7 +57,7 @@
   }
   #status {
     max-width: 720px;
-    margin: 0 auto 16px;
+    margin: 4px auto 8px;
     color: #ffaa55;
     min-height: 20px;
     text-align: center;
@@ -74,10 +74,10 @@
     background: #2a2a2a;
     border: 2px solid #333;
     border-radius: 8px;
-    padding: 10px 8px;
+    padding: 8px 6px;
     text-align: center;
     transition: all 0.15s;
-    min-height: 150px;
+    min-height: 120px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -119,14 +119,14 @@
 	background-image: none; /* hide pencil while typing */
   }
   .play-btn {
-    width: 42px;
-    height: 42px;
-    border-radius: 50%;
     background: #4a9eff;
     border: none;
     color: white;
-    font-size: 16px;
+    padding: 6px 8px;
+    border-radius: 4px;
+    font-size: 14px;
     cursor: pointer;
+    width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -191,7 +191,7 @@
   .solved-note { color: #4a4a4a; font-style: italic; }
   .mistakes-row {
     max-width: 720px;
-    margin: 0 auto 12px;
+    margin: 4px auto 12px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -255,14 +255,14 @@
   <div class="day-selector" id="day-selector"></div>
   <div class="unlock-countdown" id="unlock-countdown"></div>
   <div class="subtitle">Find four groups of four. Tap to play, "Select" to group.</div>
+  <div id="solved"></div>
+  <div id="end-panel" style="display: none;"></div>
+  <div id="grid"></div>
+  <div id="status">Loading previews from iTunes…</div>
   <div class="mistakes-row">
     Mistakes remaining:
     <div class="mistakes-dots" id="mistakes-dots"></div>
   </div>
-  <div id="status">Loading previews from iTunes…</div>
-  <div id="solved"></div>
-  <div id="end-panel" style="display: none;"></div>
-  <div id="grid"></div>
   <div class="controls">
     <button class="action secondary" id="deselect">Deselect</button>
     <button class="action" id="submit" disabled>Submit (0/4)</button>
