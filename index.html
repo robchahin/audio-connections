@@ -221,53 +221,72 @@
 const puzzle = [
   {
     theme: "Heaven in the title",
-    queries: [
-      "Just Like Heaven The Cure",
-      "Stairway to Heaven Led Zeppelin",
-      "Tears in Heaven Eric Clapton",
-      "Heaven Is a Place on Earth Belinda Carlisle"
+    trackIds: [
+      31739774,    // Just Like Heaven — The Cure
+      580708180,   // Stairway to Heaven — Led Zeppelin
+      1648144423,  // Tears in Heaven — Eric Clapton
+      1440771048,  // Heaven Is a Place on Earth — Belinda Carlisle
     ]
   },
   {
     theme: "Canadian artists",
-    queries: [
-      "My Happy Ending Avril Lavigne",
-      "Baby Justin Bieber",
-      "Summer of '69 Bryan Adams",
-      "Tom Sawyer Rush"
+    trackIds: [
+      323395690,   // My Happy Ending — Avril Lavigne
+      1440661545,  // Baby — Justin Bieber
+      1440823965,  // Summer of '69 — Bryan Adams
+      1440656027,  // Tom Sawyer — Rush
     ]
   },
   {
     theme: "Bands with repeated names",
-    queries: [
-      "It's My Life Talk Talk",
-      "Hungry Like the Wolf Duran Duran",
-      "Maps Yeah Yeah Yeahs",
-      "We Got the Beat Go-Go's"
+    trackIds: [
+      696670364,   // It's My Life — Talk Talk
+      693610953,   // Hungry Like the Wolf — Duran Duran
+      1445308818,  // Maps — Yeah Yeah Yeahs
+      1440843876,  // We Got the Beat — The Go-Go's
     ]
   },
   {
     theme: "Bands of all siblings",
-    queries: [
-      "MMMBop Hanson",
-      "ABC Jackson 5",
-      "How Deep Is Your Love Bee Gees",
-      "We Are Family Sister Sledge"
+    trackIds: [
+      1440790544,  // MMMBop — Hanson
+      1440912109,  // ABC — Jackson 5
+      1445664553,  // How Deep Is Your Love — Bee Gees
+      121052796,   // We Are Family — Sister Sledge
     ]
   }
 ];
 
-async function fetchTrack(term) {
-  const url = `https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=song&limit=1`;
-  const r = await fetch(url);
-  const data = await r.json();
-  const result = data.results[0];
-  if (!result?.previewUrl) return null;
-  return {
-    previewUrl: result.previewUrl,
-    trackName: result.trackName,
-    artistName: result.artistName,
-  };
+function sleep(ms) {
+  return new Promise(r => setTimeout(r, ms));
+}
+
+async function fetchTrack(itunesId, attempt = 1) {
+  const MAX_ATTEMPTS = 6;
+  const url = `https://itunes.apple.com/lookup?id=${itunesId}`;
+  try {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const data = await r.json();
+    const result = data.results[0];
+    if (!result?.previewUrl) {
+      console.warn(`No preview for ID ${itunesId}`);
+      return null;
+    }
+    return {
+      previewUrl: result.previewUrl,
+      trackName: result.trackName,
+      artistName: result.artistName,
+    };
+  } catch (e) {
+    if (attempt < MAX_ATTEMPTS) {
+      const delay = Math.min(500 * Math.pow(2, attempt - 1), 10000);
+      await sleep(delay);
+      return fetchTrack(itunesId, attempt + 1);
+    }
+    console.warn(`Failed to fetch ID ${itunesId} after ${attempt} attempts:`, e);
+    return null;
+  }
 }
 
 let tracks = [];
@@ -315,15 +334,22 @@ async function init() {
   const status = document.getElementById('status');
   const all = [];
   for (let t = 0; t < puzzle.length; t++) {
-    for (const q of puzzle[t].queries) all.push({ themeIdx: t, query: q });
+    for (const itunesId of puzzle[t].trackIds) all.push({ themeIdx: t, itunesId });
   }
-  const trackData = await Promise.all(all.map(x => fetchTrack(x.query)));
+
+  const trackData = [];
+  for (let i = 0; i < all.length; i++) {
+    status.textContent = `Loading previews… (${i + 1}/${all.length})`;
+    trackData.push(await fetchTrack(all[i].itunesId));
+    if (i < all.length - 1) await sleep(150);
+  }
+
   tracks = all
     .map((x, i) => trackData[i] ? { id: i, themeIdx: x.themeIdx, ...trackData[i] } : null)
     .filter(t => t !== null);
 
-  status.textContent = tracks.length < 16
-    ? `Only got ${tracks.length}/16 previews — some queries failed.`
+  status.textContent = tracks.length < all.length
+    ? `Only got ${tracks.length}/${all.length} previews — some queries failed.`
     : '';
   tracks = shuffle(tracks);
   render();
