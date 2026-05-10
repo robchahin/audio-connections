@@ -126,17 +126,20 @@
   }
   #solved { max-width: 720px; margin: 0 auto 16px; }
   .solved-row {
-    background: #2a4a2a;
-    border-left: 4px solid #5fcf5f;
-    padding: 10px 14px;
+    padding: 12px 16px;
     margin-bottom: 8px;
-    border-radius: 4px;
+    border-radius: 6px;
+    color: #1a1a1a;
   }
-  .solved-theme { font-weight: 600; }
+  .solved-row.theme-0 { background: #f9df6d; }
+  .solved-row.theme-1 { background: #a0c35a; }
+  .solved-row.theme-2 { background: #b0c4ef; }
+  .solved-row.theme-3 { background: #ba81c5; }
+  .solved-theme { font-weight: 700; }
   .solved-tracks { font-size: 13px; margin-top: 4px; }
   .solved-track-item { display: block; margin-top: 2px; }
-  .solved-title { color: #f0f0f0; }
-  .solved-artist { color: #888; }
+  .solved-title { color: #1a1a1a; }
+  .solved-artist { color: #4a4a4a; }
   .mistakes-row {
     max-width: 720px;
     margin: 0 auto 12px;
@@ -217,15 +220,6 @@
 <script>
 const puzzle = [
   {
-    theme: "Bands with repeated names",
-    queries: [
-      "It's My Life Talk Talk",
-      "Hungry Like the Wolf Duran Duran",
-      "Maps Yeah Yeah Yeahs",
-      "We Got the Beat Go-Go's"
-    ]
-  },
-  {
     theme: "Heaven in the title",
     queries: [
       "Just Like Heaven The Cure",
@@ -241,6 +235,15 @@ const puzzle = [
       "Baby Justin Bieber",
       "Summer of '69 Bryan Adams",
       "Tom Sawyer Rush"
+    ]
+  },
+  {
+    theme: "Bands with repeated names",
+    queries: [
+      "It's My Life Talk Talk",
+      "Hungry Like the Wolf Duran Duran",
+      "Maps Yeah Yeah Yeahs",
+      "We Got the Beat Go-Go's"
     ]
   },
   {
@@ -430,7 +433,7 @@ function renderSolved() {
       </div>`
     ).join('');
     const row = document.createElement('div');
-    row.className = 'solved-row';
+    row.className = `solved-row theme-${themeIdx}`;
     row.innerHTML = `<div class="solved-theme">${escapeHtml(puzzle[themeIdx].theme)}</div>
       <div class="solved-tracks">${trackList}</div>`;
     div.appendChild(row);
