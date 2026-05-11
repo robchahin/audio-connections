@@ -103,10 +103,10 @@ export const puzzles: Puzzle[] = [
       {
         theme: 'Produce in the band name',
         tracks: [
-          { id: 1440912292, artist: 'The Cranberries', title: 'Dreams', note: 'cranberries' },
-          { id: 725821929, artist: 'Blind Melon', title: 'No Rain', note: 'melon' },
-          { id: 721224621, artist: 'The Smashing Pumpkins', title: '1979', note: 'pumpkins' },
-          { id: 945575413, artist: 'Red Hot Chili Peppers', title: 'Californication', note: 'peppers' },
+          { id: 1440912292, artist: 'The Cranberries', title: 'Dreams' },
+          { id: 725821929, artist: 'Blind Melon', title: 'No Rain' },
+          { id: 721224621, artist: 'The Smashing Pumpkins', title: '1979' },
+          { id: 945575413, artist: 'Red Hot Chili Peppers', title: 'Californication' },
         ],
       },
       {
@@ -115,13 +115,13 @@ export const puzzles: Puzzle[] = [
           { id: 828259377, artist: 'M83', title: 'Midnight City' },
           { id: 696886431, artist: 'Daft Punk', title: 'Around the World' },
           { id: 1771710539, artist: 'Phoenix', title: '1901' },
-          { id: 1452878212, artist: 'Debussy', title: 'Clair de Lune', note: 'performed by Jean-Yves Thibaudet' },
+          { id: 1452878212, artist: 'Debussy', title: 'Clair de Lune' },
         ],
       },
       {
-        theme: 'Solo career after leaving a band',
+        theme: 'Frontpeople who went solo',
         tracks: [
-          { id: 1076779225, artist: 'Phil Collins', title: 'In the Air Tonight', note: 'Genesis' },
+          { id: 986876652, artist: 'Peter Gabriel', title: 'Solsbury Hill', note: 'Genesis' },
           { id: 1491226770, artist: 'Gwen Stefani', title: 'Hollaback Girl', note: 'No Doubt' },
           { id: 252606598, artist: 'Justin Timberlake', title: 'Rock Your Body', note: '*NSYNC' },
           { id: 300205685, artist: 'Björk', title: 'Army of Me', note: 'The Sugarcubes' },
