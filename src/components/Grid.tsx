@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import type { LoadedTrack } from '../types';
 import { Tile } from './Tile';
 
@@ -33,8 +34,29 @@ export function Grid({
   const visible = tracks.filter(
     (t) => !solvedThemes.has(t.themeIdx) || exitingThemes.has(t.themeIdx),
   );
+
+  const gridRef = useRef<HTMLDivElement>(null);
+  const centeredRef = useRef(false);
+
+  // On initial load (and on day switch, which empties then refills the grid),
+  // center the horizontal scroll position so the middle columns are visible
+  // when the grid is wider than its container.
+  useEffect(() => {
+    const grid = gridRef.current;
+    if (!grid) return;
+    if (visible.length === 0) {
+      centeredRef.current = false;
+      return;
+    }
+    if (centeredRef.current) return;
+    if (grid.scrollWidth > grid.clientWidth) {
+      grid.scrollLeft = (grid.scrollWidth - grid.clientWidth) / 2;
+    }
+    centeredRef.current = true;
+  }, [visible.length]);
+
   return (
-    <div className="grid" data-testid="grid">
+    <div className="grid" data-testid="grid" ref={gridRef}>
       {visible.map((track, idx) => (
         <Tile
           key={track.id}

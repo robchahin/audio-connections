@@ -42,6 +42,19 @@ body {
   .app-container {
     padding: 18px 14px 32px;
   }
+  /* Day buttons can wrap if too wide on narrow screens. */
+  .day-btn {
+    padding: 5px 10px;
+    font-size: 12px;
+  }
+  /* The grid scrolls horizontally on narrow screens, so the focused note
+     input's -30% sideways expansion can poke past the scroll viewport.
+     Clamp it to the tile width. */
+  .tile-label-input:focus {
+    left: 0;
+    right: 0;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+  }
 }
 h1 {
   margin: 0 0 2px;
@@ -112,10 +125,18 @@ h1 {
 }
 .grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  /* Columns have a floor of 130px so tiles never get too cramped to use.
+     When the grid is wider than its container (narrow viewports), the grid
+     itself becomes horizontally scrollable rather than the page. */
+  grid-template-columns: repeat(4, minmax(130px, 1fr));
   gap: 12px;
   max-width: 720px;
   margin: 0 auto 20px;
+  overflow-x: auto;
+  /* Pad the bottom so the scrollbar (when shown) doesn't crowd the tiles. */
+  padding-bottom: 6px;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
 }
 .tile {
   background: linear-gradient(180deg, var(--tile-grad-top) 0%, var(--tile-grad-bot) 100%);

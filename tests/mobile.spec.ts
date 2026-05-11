@@ -1,0 +1,136 @@
+import { test, expect, devices, Page } from '@playwright/test';
+
+// Pixel 5 (393×851) gives a representative narrow-mobile viewport while
+// staying on the Chromium engine we already have installed.
+test.use(devices['Pixel 5']);
+
+const APP_URL = '/?mock=1';
+
+async function gotoDay1(page: Page) {
+  await page.goto(APP_URL);
+  await page.getByTestId('day-btn-1').click();
+  await expect(page.getByTestId('puzzle-heading')).toHaveText('Audio Connections 1');
+  await expect(page.locator('.tile')).toHaveCount(16);
+}
+
+test.describe('Mobile (Pixel 5) layout', () => {
+  test.beforeEach(async ({ page }) => {
+    await gotoDay1(page);
+  });
+
+  test('page has no horizontal overflow', async ({ page }) => {
+    const overflow = await page.evaluate(() => {
+      const html = document.documentElement;
+      const body = document.body;
+      return Math.max(html.scrollWidth, body.scrollWidth) - html.clientWidth;
+    });
+    expect(overflow).toBeLessThanOrEqual(0);
+  });
+
+  test('cassette deck and tile-actions fit inside every tile', async ({ page }) => {
+    // Measure in-browser so the parent/child relationship is by DOM tree,
+    // not by locator chaining (which proved order-dependent here).
+    const overflows = await page.evaluate(() => {
+      const out: { id: string; what: string; tileRight: number; childRight: number }[] = [];
+      document.querySelectorAll<HTMLElement>('.tile').forEach((tile) => {
+        const tb = tile.getBoundingClientRect();
+        for (const sel of ['.cassette-deck', '.tile-actions']) {
+          const child = tile.querySelector<HTMLElement>(sel);
+          if (!child) continue;
+          const cb = child.getBoundingClientRect();
+          if (cb.left < tb.left - 0.5 || cb.right > tb.right + 0.5) {
+            out.push({
+              id: tile.dataset.trackId ?? '?',
+              what: sel,
+              tileRight: Math.round(tb.right),
+              childRight: Math.round(cb.right),
+            });
+          }
+        }
+      });
+      return out;
+    });
+    expect(overflows, JSON.stringify(overflows)).toEqual([]);
+  });
+
+  test('focused note input stays within its tile bounds', async ({ page }) => {
+    // With the grid horizontally scrollable on mobile, "stays within viewport"
+    // is the wrong test — instead the focused input must not expand outside
+    // its parent tile (otherwise it would clip against the grid's overflow).
+    const offenders = await page.evaluate(() => {
+      const tiles = Array.from(document.querySelectorAll<HTMLElement>('.tile'));
+      const out: { id: string; tileLeft: number; tileRight: number; inputLeft: number; inputRight: number }[] = [];
+      for (const tile of tiles) {
+        const input = tile.querySelector<HTMLInputElement>('.tile-label-input');
+        if (!input) continue;
+        input.focus();
+        const tb = tile.getBoundingClientRect();
+        const ib = input.getBoundingClientRect();
+        if (ib.left < tb.left - 0.5 || ib.right > tb.right + 0.5) {
+          out.push({
+            id: tile.dataset.trackId ?? '?',
+            tileLeft: Math.round(tb.left),
+            tileRight: Math.round(tb.right),
+            inputLeft: Math.round(ib.left),
+            inputRight: Math.round(ib.right),
+          });
+        }
+        input.blur();
+      }
+      return out;
+    });
+    expect(offenders, JSON.stringify(offenders)).toEqual([]);
+  });
+
+  test('grid scrolls horizontally when columns do not fit', async ({ page }) => {
+    const { scrollWidth, clientWidth } = await page.evaluate(() => {
+      const grid = document.querySelector<HTMLElement>('.grid')!;
+      return { scrollWidth: grid.scrollWidth, clientWidth: grid.clientWidth };
+    });
+    expect(scrollWidth).toBeGreaterThan(clientWidth);
+  });
+
+  test('grid is horizontally centered on initial load', async ({ page }) => {
+    const { scrollLeft, scrollWidth, clientWidth } = await page.evaluate(() => {
+      const g = document.querySelector<HTMLElement>('.grid')!;
+      return {
+        scrollLeft: g.scrollLeft,
+        scrollWidth: g.scrollWidth,
+        clientWidth: g.clientWidth,
+      };
+    });
+    const expectedCenter = (scrollWidth - clientWidth) / 2;
+    expect(Math.abs(scrollLeft - expectedCenter)).toBeLessThanOrEqual(1);
+  });
+
+  test('day selector buttons are reachable (not clipped)', async ({ page }) => {
+    const buttons = page.locator('[data-testid^="day-btn-"]');
+    const count = await buttons.count();
+    expect(count).toBeGreaterThan(0);
+    const viewport = page.viewportSize()!;
+    for (let i = 0; i < count; i++) {
+      const box = await buttons.nth(i).boundingBox();
+      expect(box!.x).toBeGreaterThanOrEqual(0);
+      expect(box!.x + box!.width).toBeLessThanOrEqual(viewport.width);
+    }
+  });
+
+  test('full gameplay flow works on mobile', async ({ page }) => {
+    const ids = await page.$$eval('.tile[data-track-id]', (els) =>
+      els.map((el) => Number((el as HTMLElement).dataset.trackId)),
+    );
+    const themes = new Map<number, number[]>();
+    for (const id of ids) {
+      const t = Math.floor(id / 4);
+      const arr = themes.get(t) ?? [];
+      arr.push(id);
+      themes.set(t, arr);
+    }
+    for (const id of themes.get(0)!) {
+      await page.getByTestId(`select-${id}`).tap();
+    }
+    await expect(page.getByTestId('submit-btn')).toHaveText('Submit (4/4)');
+    await page.getByTestId('submit-btn').tap();
+    await expect(page.getByTestId('solved-row-0')).toBeVisible();
+  });
+});
