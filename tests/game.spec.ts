@@ -159,6 +159,47 @@ test.describe('Audio Connections — day switching', () => {
   });
 });
 
+test.describe('Audio Connections — Konami unlock', () => {
+  const KONAMI = [
+    'ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown',
+    'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight',
+    'b', 'a',
+  ];
+
+  async function typeKonami(page: Page) {
+    for (const key of KONAMI) {
+      await page.keyboard.press(key);
+    }
+  }
+
+  test('the code unlocks every Day button', async ({ page }) => {
+    await page.goto(APP_URL);
+    await expect(page.getByTestId('grid')).toBeVisible();
+    await typeKonami(page);
+    await expect(page.getByTestId('status')).toContainText(/Konami/);
+    for (const p of puzzles) {
+      await expect(page.getByTestId(`day-btn-${p.day}`)).toBeEnabled();
+    }
+  });
+
+  test('keys typed inside a note input do not trigger the unlock', async ({ page }) => {
+    await gotoDay(page, 1);
+    const id = (await readTrackIds(page))[0]!;
+    const input = page.locator(`[data-testid="tile-${id}"] .tile-label-input`);
+    await input.focus();
+    // Type a sequence that contains the trigger letters, but inside an input.
+    await input.type('ba');
+    // Move focus away then send the rest of the konami sequence on its own —
+    // it should not complete because progress starts from 0.
+    await input.blur();
+    await page.keyboard.press('b');
+    await page.keyboard.press('a');
+    // Status should not contain "Konami" — it might still hold a load message
+    // or be empty, but not the unlock string.
+    await expect(page.getByTestId('status')).not.toContainText(/Konami/);
+  });
+});
+
 test.describe('Audio Connections — persistence & reset', () => {
   test('selections, notes, and current day survive a reload', async ({ page }) => {
     await gotoDay(page, 1);

@@ -353,18 +353,35 @@ export function App() {
   const [, forceRender] = useState(0);
   const bump = useCallback(() => forceRender((n) => n + 1), []);
 
-  /* ── Expose window.unlockAll for manually unlocking all puzzles ── */
+  /* ── Konami code (↑↑↓↓←→←→BA) unlocks every puzzle ── */
   useEffect(() => {
-    const w = window as unknown as { unlockAll?: () => void };
-    w.unlockAll = () => {
-      for (const p of puzzles) delete p.releaseAt;
-      bump();
-      console.log('All puzzles unlocked. Reload the page to revert.');
+    const SEQUENCE = [
+      'ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown',
+      'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight',
+      'b', 'a',
+    ];
+    let progress = 0;
+
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement | null)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+      if (key === SEQUENCE[progress]) {
+        progress++;
+        if (progress === SEQUENCE.length) {
+          progress = 0;
+          for (const p of puzzles) delete p.releaseAt;
+          bump();
+          setStatus('🎮 Konami! All puzzles unlocked.');
+        }
+      } else {
+        progress = key === SEQUENCE[0] ? 1 : 0;
+      }
     };
-    return () => {
-      delete w.unlockAll;
-    };
-  }, [bump]);
+
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [bump, setStatus]);
 
   /* ── Update document title + persist current day when puzzle changes ── */
   useEffect(() => {
