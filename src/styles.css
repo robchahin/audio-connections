@@ -500,3 +500,23 @@ button.secondary {
 .copy-btn.copied {
   background: #5fcf5f;
 }
+.reset-btn {
+  display: block;
+  margin: 14px auto 0;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 4px 8px;
+}
+.reset-btn:hover {
+  color: var(--text-secondary);
+}
+.reset-btn.confirming {
+  color: #ff6b6b;
+  text-decoration: none;
+  font-weight: 600;
+}

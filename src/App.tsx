@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { LoadedTrack, Guess } from './types';
 import { puzzles, MAX_MISTAKES, isReleased, latestReleasedIndex } from './puzzles';
 import { fetchPreviewUrl, sleep } from './itunes';
+import { loadState, saveState, clearState, loadCurrentDay, saveCurrentDay } from './storage';
 import { DaySelector } from './components/DaySelector';
 import { Countdown } from './components/Countdown';
 import { Grid } from './components/Grid';
@@ -9,6 +10,7 @@ import { SolvedList } from './components/SolvedList';
 import { MistakesDisplay } from './components/MistakesDisplay';
 import { Controls } from './components/Controls';
 import { EndPanel } from './components/EndPanel';
+import { ResetButton } from './components/ResetButton';
 
 const STATUS_TIMEOUT_MS = 2500;
 const EXIT_ANIM_MS = 400;
@@ -35,8 +37,21 @@ function isMockMode(): boolean {
   return new URLSearchParams(window.location.search).has('mock');
 }
 
+function setEqual(a: ReadonlyArray<number>, b: ReadonlyArray<number>): boolean {
+  if (a.length !== b.length) return false;
+  const s = new Set(a);
+  return b.every((x) => s.has(x));
+}
+
 export function App() {
-  const [currentIndex, setCurrentIndex] = useState(() => latestReleasedIndex());
+  const [currentIndex, setCurrentIndex] = useState(() => {
+    const saved = loadCurrentDay();
+    if (saved !== null) {
+      const idx = puzzles.findIndex((p) => p.day === saved);
+      if (idx >= 0 && isReleased(puzzles[idx]!)) return idx;
+    }
+    return latestReleasedIndex();
+  });
   const [tracks, setTracks] = useState<LoadedTrack[]>([]);
   const [loadStatus, setLoadStatus] = useState('Loading previews from iTunes…');
   const [selected, setSelected] = useState<Set<number>>(() => new Set());
@@ -69,13 +84,33 @@ export function App() {
     }, STATUS_TIMEOUT_MS);
   }, []);
 
-  /* ── Load tracks (iTunes lookups) ── */
+  /* ── Audio playback ── */
+  const stopAudio = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    setPlayingId(null);
+    setPlayProgress(0);
+  }, []);
+
+  /* ── Load tracks (iTunes lookups) + restore persisted state for this day ── */
   useEffect(() => {
     const myGen = ++loadGenRef.current;
     const mock = isMockMode();
     const all = themes.flatMap((t, themeIdx) => t.tracks.map((trk) => ({ themeIdx, ...trk })));
-    setLoadStatus(mock ? '' : 'Loading previews from iTunes…');
+
+    // Reset state for the incoming puzzle. Persisted state (if any) is reapplied below.
     setTracks([]);
+    setSelected(new Set());
+    setSolvedThemes(new Set());
+    setExitingThemes(new Set());
+    setNotes(new Map());
+    setMistakes(0);
+    setGuessHistory([]);
+    setGameOver(false);
+    guessSigRef.current = new Set();
+    setLoadStatus(mock ? '' : 'Loading previews from iTunes…');
 
     (async () => {
       const previewUrls: (string | null)[] = [];
@@ -112,24 +147,46 @@ export function App() {
           ? `Only got ${loaded.length}/${all.length} previews — some queries failed.`
           : '',
       );
-      setTracks(shuffle(loaded));
+
+      const persisted = loadState(puzzle.day);
+      const loadedIds = loaded.map((t) => t.id);
+      if (persisted && setEqual(persisted.trackOrder, loadedIds)) {
+        const byId = new Map(loaded.map((t) => [t.id, t]));
+        const ordered = persisted.trackOrder
+          .map((id) => byId.get(id))
+          .filter((t): t is LoadedTrack => !!t);
+        setTracks(ordered);
+        setSelected(new Set(persisted.selected));
+        setSolvedThemes(new Set(persisted.solvedThemes));
+        setNotes(new Map(persisted.notes));
+        setMistakes(persisted.mistakes);
+        setGuessHistory(persisted.guessHistory);
+        setGameOver(persisted.gameOver);
+        guessSigRef.current = new Set(persisted.guessSignatures);
+      } else {
+        setTracks(shuffle(loaded));
+      }
     })();
 
     return () => {
-      // bump gen so async ops bail
       loadGenRef.current++;
     };
-  }, [themes]);
+  }, [themes, puzzle.day]);
 
-  /* ── Audio playback ── */
-  const stopAudio = useCallback(() => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
-    setPlayingId(null);
-    setPlayProgress(0);
-  }, []);
+  /* ── Persist game state on every change (after tracks have loaded) ── */
+  useEffect(() => {
+    if (tracks.length === 0) return;
+    saveState(puzzle.day, {
+      selected: [...selected],
+      solvedThemes: [...solvedThemes],
+      notes: [...notes],
+      mistakes,
+      guessHistory,
+      gameOver,
+      trackOrder: tracks.map((t) => t.id),
+      guessSignatures: [...guessSigRef.current],
+    });
+  }, [puzzle.day, tracks, selected, solvedThemes, notes, mistakes, guessHistory, gameOver]);
 
   const togglePlay = useCallback(
     (id: number) => {
@@ -224,7 +281,7 @@ export function App() {
     for (const t of themesPicked) counts.set(t, (counts.get(t) ?? 0) + 1);
     const maxCount = Math.max(...counts.values());
     const correct = maxCount === 4;
-    setGuessHistory((prev) => [...prev, { themes: themesPicked, correct }]);
+    setGuessHistory((prev) => [...prev, { themes: themesPicked, correct, ids }]);
 
     if (correct) {
       const themeIdx = themesPicked[0]!;
@@ -264,25 +321,33 @@ export function App() {
     }
   }, [gameOver, selected, tracks, themes, solvedThemes, mistakes, setStatus]);
 
-  /* ── Switch day ── */
+  /* ── Switch day ── (load effect resets in-memory state when puzzle.day changes) */
   const switchDay = useCallback(
     (idx: number) => {
       if (idx === currentIndex) return;
       const p = puzzles[idx];
       if (!p || !isReleased(p)) return;
       stopAudio();
-      setSelected(new Set());
-      setSolvedThemes(new Set());
-      setExitingThemes(new Set());
-      setNotes(new Map());
-      setMistakes(0);
-      setGuessHistory([]);
-      setGameOver(false);
-      guessSigRef.current = new Set();
       setCurrentIndex(idx);
     },
     [currentIndex, stopAudio],
   );
+
+  /* ── Reset current puzzle (clears persisted state + reshuffles) ── */
+  const resetPuzzle = useCallback(() => {
+    clearState(puzzle.day);
+    stopAudio();
+    setSelected(new Set());
+    setSolvedThemes(new Set());
+    setExitingThemes(new Set());
+    setNotes(new Map());
+    setMistakes(0);
+    setGuessHistory([]);
+    setGameOver(false);
+    guessSigRef.current = new Set();
+    setTracks((prev) => shuffle(prev));
+    setStatus('Puzzle reset.');
+  }, [puzzle.day, stopAudio, setStatus]);
 
   /* ── Force re-render (for unlockAll + countdown-driven unlocks) ── */
   const [, forceRender] = useState(0);
@@ -301,9 +366,10 @@ export function App() {
     };
   }, [bump]);
 
-  /* ── Update document title when puzzle changes ── */
+  /* ── Update document title + persist current day when puzzle changes ── */
   useEffect(() => {
     document.title = `Audio Connections ${puzzle.day} — by Corey Farwell`;
+    saveCurrentDay(puzzle.day);
   }, [puzzle.day]);
 
   const heading = `Audio Connections ${puzzle.day}`;
@@ -347,6 +413,7 @@ export function App() {
         onDeselect={deselectAll}
         onSubmit={submit}
       />
+      <ResetButton onReset={resetPuzzle} />
     </div>
   );
 }

@@ -158,3 +158,97 @@ test.describe('Audio Connections — day switching', () => {
     await expect(page.locator('.tile')).toHaveCount(16);
   });
 });
+
+test.describe('Audio Connections — persistence & reset', () => {
+  test('selections, notes, and current day survive a reload', async ({ page }) => {
+    await gotoDay(page, 1);
+    const themes = groupByTheme(await readTrackIds(page));
+    const firstTwo = themes.get(0)!.slice(0, 2);
+    await selectIds(page, firstTwo);
+
+    // Add a note to one of the selected tiles
+    const noteId = firstTwo[0]!;
+    const noteInput = page.locator(`[data-testid="tile-${noteId}"] .tile-label-input`);
+    await noteInput.fill('keep me');
+    await noteInput.press('Enter');
+
+    await expect(page.getByTestId('submit-btn')).toHaveText('Submit (2/4)');
+
+    await page.reload();
+    // Persisted current day brings us back to Day 1 without an extra click.
+    await expect(page.getByTestId('puzzle-heading')).toHaveText('Audio Connections 1');
+    await expect(page.locator('.tile')).toHaveCount(16);
+    await expect(page.getByTestId('submit-btn')).toHaveText('Submit (2/4)');
+    for (const id of firstTwo) {
+      await expect(page.locator(`[data-testid="tile-${id}"]`)).toHaveClass(/selected/);
+    }
+    await expect(
+      page.locator(`[data-testid="tile-${noteId}"] .tile-label-input`),
+    ).toHaveValue('keep me');
+  });
+
+  test('solved themes and mistakes survive a reload', async ({ page }) => {
+    await gotoDay(page, 1);
+    const themes = groupByTheme(await readTrackIds(page));
+
+    // One correct group + one wrong guess.
+    await selectIds(page, themes.get(0)!);
+    await page.getByTestId('submit-btn').click();
+    await expect(page.getByTestId('solved-row-0')).toBeVisible();
+    await expect(page.locator('.tile')).toHaveCount(12, { timeout: 4000 });
+
+    await selectIds(page, [
+      themes.get(1)![0]!,
+      themes.get(2)![0]!,
+      themes.get(3)![0]!,
+      themes.get(1)![1]!,
+    ]);
+    await page.getByTestId('submit-btn').click();
+    await expect(page.locator('.mistake-dot.used')).toHaveCount(1);
+
+    await page.reload();
+    await expect(page.getByTestId('solved-row-0')).toBeVisible();
+    await expect(page.locator('.tile')).toHaveCount(12);
+    await expect(page.locator('.mistake-dot.used')).toHaveCount(1);
+  });
+
+  test('reset button requires two clicks and clears state', async ({ page }) => {
+    await gotoDay(page, 1);
+    const themes = groupByTheme(await readTrackIds(page));
+    await selectIds(page, themes.get(0)!.slice(0, 3));
+    await expect(page.getByTestId('submit-btn')).toHaveText('Submit (3/4)');
+
+    const resetBtn = page.getByTestId('reset-btn');
+    await expect(resetBtn).toHaveText('Reset puzzle');
+
+    // First click arms the confirm state; selection remains.
+    await resetBtn.click();
+    await expect(resetBtn).toHaveText('Click again to confirm reset');
+    await expect(page.getByTestId('submit-btn')).toHaveText('Submit (3/4)');
+
+    // Second click actually resets.
+    await resetBtn.click();
+    await expect(resetBtn).toHaveText('Reset puzzle');
+    await expect(page.getByTestId('submit-btn')).toHaveText('Submit (0/4)');
+
+    // The reset clears persisted state — reload should not bring selections back.
+    await page.reload();
+    await expect(page.locator('.tile')).toHaveCount(16);
+    await expect(page.getByTestId('submit-btn')).toHaveText('Submit (0/4)');
+  });
+
+  test('confirm state auto-cancels after timeout (no double-click within window)', async ({ page }) => {
+    await gotoDay(page, 1);
+    const themes = groupByTheme(await readTrackIds(page));
+    await selectIds(page, themes.get(0)!.slice(0, 2));
+
+    const resetBtn = page.getByTestId('reset-btn');
+    await resetBtn.click();
+    await expect(resetBtn).toHaveText('Click again to confirm reset');
+
+    // Wait long enough for the 3s confirm window to lapse.
+    await expect(resetBtn).toHaveText('Reset puzzle', { timeout: 5000 });
+    // Selection should still be intact since reset never fired.
+    await expect(page.getByTestId('submit-btn')).toHaveText('Submit (2/4)');
+  });
+});

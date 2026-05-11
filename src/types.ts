@@ -30,4 +30,6 @@ export interface LoadedTrack {
 export interface Guess {
   themes: number[];
   correct: boolean;
+  /** Selected track ids for this guess; used to dedup duplicate submissions after a reload. */
+  ids: number[];
 }
