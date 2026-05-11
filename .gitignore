@@ -1,2 +1,9 @@
 .playwright-mcp/
 *.png
+node_modules/
+dist/
+test-results/
+playwright-report/
+.vite/
+.tsbuild-node/
+*.tsbuildinfo
