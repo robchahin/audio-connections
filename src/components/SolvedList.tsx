@@ -15,12 +15,8 @@ export function SolvedList({ themes, solvedThemes, tracks }: SolvedListProps) {
           <div key={themeIdx} className={`solved-row theme-${themeIdx}`} data-testid={`solved-row-${themeIdx}`}>
             <div className="solved-theme">{themes[themeIdx].theme}</div>
             <div className="solved-tracks">
-              {themeTracks.map((t, i) => (
-                <div
-                  key={t.id}
-                  className="solved-track-item"
-                  style={{ animationDelay: `${(0.15 + i * 0.08).toFixed(2)}s` }}
-                >
+              {themeTracks.map((t) => (
+                <div key={t.id} className="solved-track-item">
                   <span className="solved-title">{t.title}</span>
                   <span className="solved-artist"> — {t.artist}</span>
                   {t.note && <span className="solved-note"> ({t.note})</span>}

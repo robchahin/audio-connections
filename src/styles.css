@@ -442,7 +442,11 @@ button.secondary {
   margin-bottom: 8px;
   border-radius: 8px;
   color: #1a1a1a;
-  animation: bannerSlide 0.45s var(--spring);
+  /* Note: don't use var(--spring) here. --spring is "0.35s ease-out", and
+     in the animation shorthand the parser reads the 0.35s as animation-delay,
+     producing a 350ms gap where the element shows un-animated before sliding
+     in. Specify the timing-function directly instead. */
+  animation: bannerSlide 0.45s ease-out;
 }
 @keyframes bannerSlide {
   0%   { opacity: 0; transform: translateY(8px) scale(0.96); }
@@ -451,11 +455,6 @@ button.secondary {
 .solved-track-item {
   display: block;
   margin-top: 2px;
-  animation: trackFade 0.35s ease-out both;
-}
-@keyframes trackFade {
-  0%   { opacity: 0; transform: translateX(-6px); }
-  100% { opacity: 1; transform: translateX(0); }
 }
 .solved-row.theme-0 { background: #f9df6d; }
 .solved-row.theme-1 { background: #a0c35a; }
@@ -502,7 +501,7 @@ button.secondary {
 }
 .mistake-dot.used {
   background: #3a3a3a;
-  animation: dotLost 0.5s var(--spring);
+  animation: dotLost 0.5s ease-out;
 }
 @keyframes dotLost {
   0%   { background: #aaa; transform: scale(1); }
