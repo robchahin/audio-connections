@@ -192,6 +192,29 @@ test.describe('Audio Connections — day switching', () => {
     await expect(page.locator('.tile')).toHaveCount(16);
   });
 
+  test('switching off a just-won day does not mark the new day done', async ({ page }) => {
+    await gotoDay(page, 1);
+    const themes = groupByTheme(await readTrackIds(page));
+    for (let t = 0; t < 4; t++) {
+      await selectIds(page, themes.get(t)!);
+      await page.getByTestId('submit-btn').click();
+      await expect(page.getByTestId(`solved-row-${t}`)).toBeVisible();
+    }
+    await expect(page.getByTestId('end-panel')).toContainText('Solved!');
+    await expect(page.getByTestId('day-btn-1')).toHaveClass(/done/);
+
+    await page.getByTestId('day-btn-2').click();
+    // Wait for the new day's tiles to actually load before asserting, so the
+    // check runs against the post-load state, not the brief stale window.
+    await expect(page.getByTestId('puzzle-heading')).toHaveText('Audio Connections 2');
+    await expect(page.locator('.tile')).toHaveCount(16);
+
+    await expect(page.getByTestId('day-btn-2')).not.toHaveClass(/done/);
+    await expect(page.getByTestId('day-btn-2')).not.toContainText('✓');
+    // Day 1 still done.
+    await expect(page.getByTestId('day-btn-1')).toHaveClass(/done/);
+  });
+
   test('winning a day marks its button done (green ✓), survives reload', async ({ page }) => {
     await gotoDay(page, 1);
     const themes = groupByTheme(await readTrackIds(page));

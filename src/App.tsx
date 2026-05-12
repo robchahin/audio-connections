@@ -431,6 +431,11 @@ export function App() {
 
   /* ── Mark the day completed once it's won ── */
   useEffect(() => {
+    // Same guard as the persistence save effect: when puzzle.day flips on a
+    // day switch, the other gameplay state is still from the outgoing day
+    // until the track-load effect resets it. Without this check, switching
+    // out of a just-won day marks the *new* day done.
+    if (tracksDay !== puzzle.day) return;
     if (gameOver && won) {
       setCompletedDays((prev) => {
         if (prev.has(puzzle.day)) return prev;
@@ -439,7 +444,7 @@ export function App() {
         return next;
       });
     }
-  }, [gameOver, won, puzzle.day]);
+  }, [gameOver, won, puzzle.day, tracksDay]);
 
   const heading = `Audio Connections ${puzzle.day}`;
   const dateText = useMemo(() => formatPuzzleDate(puzzle.date), [puzzle.date]);
