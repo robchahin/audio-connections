@@ -4,21 +4,25 @@ import { isReleased } from '../puzzles';
 interface DaySelectorProps {
   puzzles: Puzzle[];
   currentIndex: number;
+  completedDays: Set<number>;
   onSwitch: (idx: number) => void;
 }
 
-export function DaySelector({ puzzles, currentIndex, onSwitch }: DaySelectorProps) {
+export function DaySelector({ puzzles, currentIndex, completedDays, onSwitch }: DaySelectorProps) {
   return (
     <div className="day-selector" data-testid="day-selector">
       {puzzles.map((p, idx) => {
         const released = isReleased(p);
+        const done = completedDays.has(p.day);
         const classes = [
           'day-btn',
           idx === currentIndex && 'active',
           !released && 'locked',
+          done && 'done',
         ]
           .filter(Boolean)
           .join(' ');
+        const suffix = done ? ' ✓' : !released ? ' 🔒' : '';
         return (
           <button
             key={p.day}
@@ -29,7 +33,7 @@ export function DaySelector({ puzzles, currentIndex, onSwitch }: DaySelectorProp
             onClick={() => released && onSwitch(idx)}
             data-testid={`day-btn-${p.day}`}
           >
-            Day {p.day}{!released ? ' 🔒' : ''}
+            Day {p.day}{suffix}
           </button>
         );
       })}

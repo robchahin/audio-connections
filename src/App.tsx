@@ -70,6 +70,18 @@ export function App() {
   const [playingId, setPlayingId] = useState<number | null>(null);
   const [playProgress, setPlayProgress] = useState(0);
   const [statusMsg, setStatusMsg] = useState('');
+  // Days the player has finished (all themes solved, no mistakes left). Seeded
+  // from localStorage so the green ✓ survives reloads.
+  const [completedDays, setCompletedDays] = useState<Set<number>>(() => {
+    const out = new Set<number>();
+    for (const p of puzzles) {
+      const s = loadState(p.day);
+      if (s && s.gameOver && s.solvedThemes.length === p.themes.length && s.mistakes < MAX_MISTAKES) {
+        out.add(p.day);
+      }
+    }
+    return out;
+  });
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const statusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -365,6 +377,12 @@ export function App() {
     setGameOver(false);
     guessSigRef.current = new Set();
     setTracks((prev) => shuffle(prev));
+    setCompletedDays((prev) => {
+      if (!prev.has(puzzle.day)) return prev;
+      const next = new Set(prev);
+      next.delete(puzzle.day);
+      return next;
+    });
     setStatus('Puzzle reset.');
   }, [puzzle.day, stopAudio, setStatus]);
 
@@ -408,6 +426,18 @@ export function App() {
     saveCurrentDay(puzzle.day);
   }, [puzzle.day]);
 
+  /* ── Mark the day completed once it's won ── */
+  useEffect(() => {
+    if (gameOver && won) {
+      setCompletedDays((prev) => {
+        if (prev.has(puzzle.day)) return prev;
+        const next = new Set(prev);
+        next.add(puzzle.day);
+        return next;
+      });
+    }
+  }, [gameOver, won, puzzle.day]);
+
   const heading = `Audio Connections ${puzzle.day}`;
   const dateText = useMemo(() => formatPuzzleDate(puzzle.date), [puzzle.date]);
   const selectedCount = selected.size;
@@ -420,7 +450,12 @@ export function App() {
       <div className="byline">
         by Corey Farwell · <span data-testid="puzzle-date">{dateText}</span>
       </div>
-      <DaySelector puzzles={puzzles} currentIndex={currentIndex} onSwitch={switchDay} />
+      <DaySelector
+        puzzles={puzzles}
+        currentIndex={currentIndex}
+        completedDays={completedDays}
+        onSwitch={switchDay}
+      />
       <Countdown puzzles={puzzles} onUnlock={bump} />
       <div className="subtitle">Find four groups of four. Tap to play, "Select" to group.</div>
       <SolvedList themes={themes} solvedThemes={solvedThemes} tracks={tracks} />

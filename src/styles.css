@@ -97,6 +97,20 @@ h1 {
   border-color: #4a9eff;
   color: white;
 }
+.day-btn.done {
+  border-color: #5fcf5f;
+  color: #5fcf5f;
+  background: rgba(95, 207, 95, 0.08);
+}
+.day-btn.done:hover {
+  border-color: #7fdf7f;
+  color: #7fdf7f;
+}
+.day-btn.done.active {
+  background: #5fcf5f;
+  border-color: #5fcf5f;
+  color: white;
+}
 .day-btn.locked,
 .day-btn:disabled {
   opacity: 0.45;

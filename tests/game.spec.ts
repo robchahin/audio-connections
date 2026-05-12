@@ -176,6 +176,46 @@ test.describe('Audio Connections — day switching', () => {
     await expect(page.locator('.tile')).toHaveCount(16);
   });
 
+  test('winning a day marks its button done (green ✓), survives reload', async ({ page }) => {
+    await gotoDay(page, 1);
+    const themes = groupByTheme(await readTrackIds(page));
+    for (let t = 0; t < 4; t++) {
+      await selectIds(page, themes.get(t)!);
+      await page.getByTestId('submit-btn').click();
+      await expect(page.getByTestId(`solved-row-${t}`)).toBeVisible();
+    }
+    await expect(page.getByTestId('end-panel')).toContainText('Solved!');
+    const dayBtn = page.getByTestId('day-btn-1');
+    await expect(dayBtn).toHaveClass(/done/);
+    await expect(dayBtn).toContainText('✓');
+
+    // Reload: the green check persists thanks to localStorage seeding.
+    await page.reload();
+    await expect(page.getByTestId('day-btn-1')).toHaveClass(/done/);
+    await expect(page.getByTestId('day-btn-1')).toContainText('✓');
+
+    // Other days remain un-done.
+    await expect(page.getByTestId('day-btn-2')).not.toHaveClass(/done/);
+  });
+
+  test('losing a day does NOT mark it done', async ({ page }) => {
+    await gotoDay(page, 1);
+    const themes = groupByTheme(await readTrackIds(page));
+    const wrongSets = [
+      [themes.get(0)![0]!, themes.get(1)![0]!, themes.get(2)![0]!, themes.get(3)![0]!],
+      [themes.get(0)![1]!, themes.get(1)![1]!, themes.get(2)![1]!, themes.get(3)![1]!],
+      [themes.get(0)![2]!, themes.get(1)![2]!, themes.get(2)![2]!, themes.get(3)![2]!],
+      [themes.get(0)![3]!, themes.get(1)![3]!, themes.get(2)![3]!, themes.get(3)![3]!],
+    ];
+    for (let i = 0; i < wrongSets.length; i++) {
+      if (i > 0) await page.getByTestId('deselect-btn').click();
+      await selectIds(page, wrongSets[i]!);
+      await page.getByTestId('submit-btn').click();
+    }
+    await expect(page.getByTestId('end-panel')).toContainText('Game over');
+    await expect(page.getByTestId('day-btn-1')).not.toHaveClass(/done/);
+  });
+
   test('losing one day does not leak fail state into the next day', async ({ page }) => {
     // Reproduces the "switched to Day 2 and it was in the fail state" bug:
     // the save effect used to fire on puzzle.day change with the outgoing
