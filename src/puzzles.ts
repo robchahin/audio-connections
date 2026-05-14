@@ -232,14 +232,14 @@ export const puzzles: Puzzle[] = [
       {
         theme: 'Internal rhyme in the title',
         tracks: [
-          { id: 574050495, artist: 'AC/DC', title: 'Hells Bells' },
+          { id: 1440751392, artist: 'Bill Haley and His Comets', title: 'Rock Around the Clock' },
           { id: 1657869393, artist: 'SZA', title: 'Kill Bill' },
           { id: 1097862833, artist: 'Radiohead', title: 'High and Dry' },
           { id: 159573861, artist: 'Cypress Hill', title: 'Insane in the Brain' },
         ],
       },
       {
-        theme: 'Back to the Future songs',
+        theme: 'Songs featured in Back to the Future',
         tracks: [
           { id: 1440829906, artist: 'Huey Lewis & The News', title: 'The Power of Love' },
           { id: 1440829927, artist: 'Alan Silvestri', title: 'Back to the Future', note: 'main theme; performed by The Outatime Orchestra' },
