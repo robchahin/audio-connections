@@ -75,6 +75,7 @@ h1 {
   max-width: 720px;
   margin: 0 auto 14px;
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   justify-content: center;
 }
