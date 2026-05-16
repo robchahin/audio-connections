@@ -417,11 +417,10 @@ export function App() {
     return () => window.removeEventListener('keydown', onKey);
   }, [bump, setStatus]);
 
-  /* ── Update document title + persist current day when puzzle changes ── */
+  /* ── Persist current day when puzzle changes ── */
   useEffect(() => {
-    document.title = `Audio Connections ${puzzle.day} — by ${puzzle.author}`;
     saveCurrentDay(puzzle.day);
-  }, [puzzle.day, puzzle.author]);
+  }, [puzzle.day]);
 
   /* ── Recompute completedDays from authoritative state on every change.
         For the current day, the live in-memory state is authoritative; for
