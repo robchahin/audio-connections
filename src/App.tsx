@@ -13,8 +13,21 @@ import { EndPanel } from './components/EndPanel';
 import { ResetButton } from './components/ResetButton';
 
 const STATUS_TIMEOUT_MS = 2500;
-const EXIT_ANIM_MS = 400;
-const MATCH_PULSE_MS = 500;
+
+/** Read a duration custom property from `:root` (e.g. `--exit-anim-ms`).
+    Accepts CSS `ms` or `s` units; falls back to `fallbackMs` if the var
+    isn't readable (SSR or stylesheet not yet attached). */
+function readCssDurationMs(prop: string, fallbackMs: number): number {
+  if (typeof window === 'undefined') return fallbackMs;
+  const raw = getComputedStyle(document.documentElement).getPropertyValue(prop).trim();
+  if (!raw) return fallbackMs;
+  const n = parseFloat(raw);
+  if (!Number.isFinite(n)) return fallbackMs;
+  return raw.endsWith('ms') ? n : n * 1000;
+}
+
+const EXIT_ANIM_MS = readCssDurationMs('--exit-anim-ms', 350);
+const MATCH_PULSE_MS = readCssDurationMs('--match-pulse-ms', 500);
 
 /** Silent 1-frame WAV used as a placeholder when running with ?mock=1. */
 const SILENT_WAV = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
