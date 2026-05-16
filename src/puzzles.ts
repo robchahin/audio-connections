@@ -287,7 +287,7 @@ export const puzzles: Puzzle[] = [
           { id: 217556132, artist: 'Blue Öyster Cult', title: "(Don't Fear) The Reaper" },
           { id: 1488653325, artist: 'The Rolling Stones', title: 'Honky Tonk Women' },
           { id: 1202371162, artist: 'War', title: 'Low Rider' },
-          { id: 192492200, artist: 'Mountain', title: 'Mississippi Queen' },
+          { id: 715534851, artist: 'Grand Funk Railroad', title: "We're an American Band" },
         ],
       },
       {
