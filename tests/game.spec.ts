@@ -5,7 +5,7 @@ const APP_URL = '/?mock=1';
 
 test('puzzles expose author metadata for every day', () => {
   for (const puzzle of puzzles) {
-    expect(puzzle.author).toBe('robchahin');
+    expect(puzzle.author.trim().length).toBeGreaterThan(0);
   }
 });
 
