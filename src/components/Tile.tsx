@@ -51,7 +51,7 @@ export function Tile({
       <span className="tile-screw br" />
 
       <div className="tile-label">
-        <div className="tile-track-no">NO. {String(index + 1).padStart(2, '0')} · C-90</div>
+        <div className="tile-track-no">C-90 · TYPE II</div>
         <textarea
           className="tile-label-input"
           placeholder="write title…"
@@ -59,9 +59,9 @@ export function Tile({
           value={note}
           onChange={(e) => onNoteChange(e.target.value)}
           onKeyDown={(e) => {
-            // Enter commits/blurs (no newline) so the note stays one logical
-            // value; Escape also blurs. Wrapping is soft (visual) only.
-            if (e.key === 'Enter' || e.key === 'Escape') {
+            // Enter inserts a newline (multi-line notes like "Song\nArtist");
+            // focus changes only on click/touch. Escape commits/blurs.
+            if (e.key === 'Escape') {
               e.preventDefault();
               (e.target as HTMLTextAreaElement).blur();
             }

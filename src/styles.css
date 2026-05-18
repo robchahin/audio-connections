@@ -33,12 +33,12 @@
   --screw-slot:     #0a0b0e;
 
   /* ---- PAPER / LABEL ----------------------------------------------------- */
-  --paper:          #e8dfc8;
-  --paper-warm:     #f1e8d0;
-  --paper-shadow:   #c5b994;
-  --paper-rule:     #b8aa83;
+  --paper:          #e7e1d3;   /* cooled a notch — less yellow */
+  --paper-warm:     #efeadc;
+  --paper-shadow:   #c2bba7;
+  --paper-rule:     #b1ab98;
   --paper-ink:      #1a1610;
-  --paper-ink-soft: #5a4d35;
+  --paper-ink-soft: #4f4d45;   /* neutral graphite, was brown #5a4d35 */
   --tape-strip:     #6a4a2a;
   --tape-strip-hi:  #8a6638;
 
@@ -49,6 +49,11 @@
   --vu-amber:       #e9b13a;
   --vu-red:         #e84a3a;
   --led-off:        #2a221c;
+  /* 1980s deck readout — glowing amber phosphor VFD (red stays the alarm) */
+  --lcd-bg:         #16100a;
+  --lcd-fg:         #ffc24a;
+  --lcd-dim:        rgba(255, 194, 74, 0.32);
+  --lcd-glow:       0 0 6px rgba(255, 194, 74, 0.62);
 
   /* ---- ACCENT / FOCUS ---------------------------------------------------- */
   --accent:         #c8a14a;    /* warm brass — replaces the cold blue */
@@ -348,7 +353,7 @@ h1 {
       rgba(0, 0, 0, 0.75) 43deg 51deg,
       rgba(255, 255, 255, 0.05) 51deg 86deg),
     radial-gradient(circle at center, transparent 9px, #14151a 9px 11px, transparent 11px),
-    radial-gradient(circle at center, #5b3a1f 0 var(--wind, 11px), transparent var(--wind, 11px)),
+    radial-gradient(circle at center, #322c24 0 var(--wind, 11px), transparent var(--wind, 11px)),
     radial-gradient(circle at 30% 25%, #3a3b40, #14151a 70%);
   border: 1px solid #050507;
   box-shadow:
@@ -413,12 +418,14 @@ h1 {
 /* Selection lift — the cued cartridge rises out of the bay. */
 .tile.selected {
   border-color: var(--accent);
-  transform: translateY(-3px);
+  /* punchier: more lift + slight pop-out + crisp bright ring */
+  transform: translateY(-4px) scale(1.02);
   box-shadow:
     inset 0 1px 0 var(--bevel-light),
     inset 0 -1px 0 var(--bevel-dark),
-    var(--accent-glow),
-    0 8px 14px rgba(0, 0, 0, 0.6);
+    0 0 0 2px var(--accent),
+    0 0 22px rgba(200, 161, 74, 0.55),
+    0 10px 18px rgba(0, 0, 0, 0.6);
 }
 .tile-progress {
   position: absolute;
@@ -530,8 +537,7 @@ h1 {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding-bottom: 4px;
-  border-bottom: 1px dashed rgba(106, 90, 58, 0.35);
+  padding-bottom: 1px;
   position: relative;
   z-index: 1;
 }
@@ -546,9 +552,9 @@ h1 {
   /* mono "typewriter" when empty, handwriting when filled */
   font-family: var(--font-mono);
   font-size: 11px;
-  line-height: 1.4;
+  line-height: 1.3;
   letter-spacing: 0.02em;
-  padding: 6px 0 0;
+  padding: 0;
   outline: none;
   text-align: left;
   position: relative;
@@ -578,7 +584,7 @@ h1 {
   color: #0d3a72; /* ballpoint blue */
   transform: rotate(-1.2deg);
   transform-origin: left top;
-  padding-top: 4px;
+  padding-top: 1px;
 }
 .tile-label:focus-within {
   box-shadow:
@@ -720,13 +726,27 @@ h1 {
   cursor: not-allowed;
 }
 .action.primary {
-  background: linear-gradient(180deg, #d2a648 0%, #7d5d1c 100%);
-  color: #14110a;
-  border-color: #2a1f08;
+  /* lit phosphor readout instead of brass */
+  background: radial-gradient(ellipse at 50% 30%, #3a2606 0%, var(--lcd-bg) 72%);
+  color: var(--lcd-fg);
+  border-color: #120b04;
+  text-shadow: var(--lcd-glow);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 194, 74, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    inset 0 0 16px rgba(255, 194, 74, 0.12),
+    0 3px 0 #050608,
+    0 4px 6px rgba(0, 0, 0, 0.5);
 }
 .action.primary:disabled {
   background: linear-gradient(180deg, #3a3b41 0%, #1c1d22 100%);
   color: #6a6358;
+  text-shadow: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.4),
+    0 3px 0 #050608,
+    0 4px 6px rgba(0, 0, 0, 0.5);
 }
 .action .key-stripe {
   display: block;
@@ -734,6 +754,10 @@ h1 {
   letter-spacing: 0.28em;
   margin-top: 3px;
   color: rgba(0, 0, 0, 0.45);
+}
+.action.primary .key-stripe {
+  color: var(--lcd-dim);
+  text-shadow: none;
 }
 .action.secondary .key-stripe {
   color: rgba(255, 255, 255, 0.25);
@@ -1059,7 +1083,8 @@ h1 {
   font-size: 10px;
   letter-spacing: 0.24em;
   text-transform: uppercase;
-  color: var(--text-muted);
+  color: rgba(255, 194, 74, 0.46);
+  transition: color var(--ease), text-shadow var(--ease);
   padding: 6px 10px;
 }
 .reset-btn .toggle {
@@ -1078,15 +1103,17 @@ h1 {
   height: 10px;
   top: 1px;
   left: 1px;
-  background: linear-gradient(180deg, #d4cebd, #6a6358);
+  background: linear-gradient(180deg, #9fb4ab, #3c4a44);
   border-radius: 1px;
   transition: left var(--ease), background var(--ease);
 }
 .reset-btn:hover {
-  color: var(--text-secondary);
+  color: var(--lcd-fg);
+  text-shadow: var(--lcd-glow);
 }
 .reset-btn.confirming {
   color: var(--rec-red);
+  text-shadow: 0 0 6px rgba(226, 58, 46, 0.6);
 }
 .reset-btn.confirming .toggle::after {
   left: 13px;
@@ -1109,10 +1136,12 @@ h1 {
   font-family: var(--font-mono);
   line-height: 1;
   cursor: pointer;
-  transition: transform 0.08s ease, border-color 0.12s ease;
+  transition: box-shadow 0.12s ease, border-color 0.12s ease;
 }
 .day-chip:hover:not(:disabled):not(.day-chip-static) {
-  transform: translateY(-1px);
+  /* crisp, status-agnostic highlight — no transform (a translate on a
+     1px-bordered box renders a blurry/doubled border on HiDPI). */
+  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.22);
 }
 .day-chip-static {
   cursor: default;
