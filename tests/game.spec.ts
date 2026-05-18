@@ -143,8 +143,15 @@ test.describe('Audio Connections — Day 1 gameplay', () => {
     const id = themes.get(0)![0]!;
     const input = page.locator(`[data-testid="tile-${id}"] .tile-label-input`);
     await input.fill('mine');
-    await input.press('Enter');
+    // Escape commits/blurs without losing the value.
+    await input.press('Escape');
     await expect(input).toHaveValue('mine');
+    // Enter inserts a newline (multi-line notes like "Song\nArtist");
+    // focus only changes on click/touch, not Enter.
+    await input.fill('Song');
+    await input.press('Enter');
+    await input.pressSequentially('Artist');
+    await expect(input).toHaveValue('Song\nArtist');
   });
 
   test('solved rows render in the order the groups were found (survives reload)', async ({
@@ -344,7 +351,7 @@ test.describe('Audio Connections — persistence & reset', () => {
     const noteId = firstTwo[0]!;
     const noteInput = page.locator(`[data-testid="tile-${noteId}"] .tile-label-input`);
     await noteInput.fill('keep me');
-    await noteInput.press('Enter');
+    await noteInput.press('Escape');
 
     await expect(page.getByTestId('submit-btn')).toContainText('SUBMIT 2/4');
 
