@@ -129,7 +129,7 @@ body {
   .tile-label { margin: 7px 7px 0; padding: 6px 8px 7px; }
   .tile-screw.bl, .tile-screw.br { display: none; }
   .tile-track-no { font-size: 7px; letter-spacing: 0.16em; }
-  .tile-label-input:not(:placeholder-shown) { font-size: 14px; }
+  .tile-label-input:not(:placeholder-shown) { font-size: 16px; }
   .subtitle { font-size: 12px; margin: 12px 4px 16px; }
   /* Solved labels: shrink the SIDE rail. */
   .solved-row { padding: 10px 12px 12px 56px; }
@@ -563,7 +563,7 @@ h1 {
 .tile-label-input:not(:placeholder-shown) {
   font-family: var(--font-hand);
   font-weight: 600;
-  font-size: 15px;
+  font-size: 17px;
   line-height: 1.2;
   letter-spacing: 0.005em;
   color: #0d3a72; /* ballpoint blue */
