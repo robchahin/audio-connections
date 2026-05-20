@@ -7,6 +7,15 @@ const puzzle: Puzzle = {
   releaseAt: '2026-05-23T00:00:00Z',
   themes: [
     {
+      theme: 'Tarot card in the title',
+      tracks: [
+        { id: 1391327247, artist: 'Smash Mouth', title: "Walkin' on the Sun", note: 'The Sun' },
+        { id: 1440858129, artist: 'Frank Sinatra', title: 'Fly Me to the Moon', note: 'The Moon' },
+        { id: 1500643398, artist: 'The Rolling Stones', title: 'Sympathy for the Devil', note: 'The Devil' },
+        { id: 1441163498, artist: 'The Beatles', title: 'The Fool on the Hill', note: 'The Fool' },
+      ],
+    },
+    {
       theme: 'Number in the title',
       tracks: [
         { id: 1446013598, artist: 'Nena', title: '99 Luftballons' },
@@ -22,15 +31,6 @@ const puzzle: Puzzle = {
         { id: 193085066, artist: 'George Michael', title: 'Careless Whisper' },
         { id: 1531037503, artist: 'John Coltrane', title: 'Giant Steps' },
         { id: 1045058681, artist: 'Bruce Springsteen', title: 'Born to Run' },
-      ],
-    },
-    {
-      theme: "#1 hit off the artist's debut album",
-      tracks: [
-        { id: 1377826892, artist: "Guns N' Roses", title: "Sweet Child o' Mine", note: 'Appetite for Destruction' },
-        { id: 716268684, artist: 'The Knack', title: 'My Sharona', note: 'Get the Knack' },
-        { id: 273143820, artist: 'Britney Spears', title: '...Baby One More Time', note: '...Baby One More Time' },
-        { id: 380907765, artist: 'a-ha', title: 'Take On Me', note: 'Hunting High and Low' },
       ],
     },
     {
