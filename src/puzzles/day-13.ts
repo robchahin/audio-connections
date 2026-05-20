@@ -27,7 +27,7 @@ const puzzle: Puzzle = {
     {
       theme: 'Instrumental hits (no vocals)',
       tracks: [
-        { id: 319516998, artist: 'The Champs', title: 'Tequila' },
+        { id: 1469579583, artist: 'The Allman Brothers Band', title: 'Jessica' },
         { id: 159363080, artist: "Booker T. & the M.G.'s", title: 'Green Onions' },
         { id: 157274264, artist: 'The Edgar Winter Group', title: 'Frankenstein' },
         { id: 575085502, artist: 'Santo & Johnny', title: 'Sleep Walk' },
