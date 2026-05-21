@@ -15,7 +15,7 @@ import { Controls } from './components/Controls';
 import { EndPanel } from './components/EndPanel';
 import { ResetButton } from './components/ResetButton';
 
-const STATUS_TIMEOUT_MS = 2500;
+const STATUS_TIMEOUT_MS = 10000;
 
 export function App() {
   const [currentIndex, setCurrentIndex] = useState(() => {
