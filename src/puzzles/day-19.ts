@@ -28,7 +28,7 @@ const puzzle: Puzzle = {
       theme: 'Songs made for video games',
       tracks: [
         { id: 1445150297, artist: 'Breaking Benjamin', title: 'Blow Me Away', note: 'Halo 2' },
-        { id: 1030633518, artist: 'Cynthia Harrell', title: 'Snake Eater', note: 'Metal Gear Solid 3' },
+        { id: 929920756, artist: 'Ted Poley & Tony Harnell', title: 'Escape from the City', note: 'Sonic Adventure 2' },
         {
           id: 1540793097,
           artist: 'Rosa Walton & Hallie Coggins',
