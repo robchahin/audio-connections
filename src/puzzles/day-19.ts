@@ -7,21 +7,21 @@ const puzzle: Puzzle = {
   releaseAt: '2026-05-28T00:00:00Z',
   themes: [
     {
-      theme: 'Dancers turned pop stars',
+      theme: 'Animal in the title',
       tracks: [
-        { id: 723700423, artist: 'Paula Abdul', title: 'Straight Up' },
-        { id: 265144699, artist: 'Jennifer Lopez', title: 'Waiting for Tonight' },
-        { id: 188261029, artist: 'Shakira', title: 'Whenever, Wherever' },
-        { id: 386153478, artist: 'Usher', title: 'Yeah!' },
+        { id: 1440832763, artist: 'Steve Miller Band', title: 'Fly Like an Eagle' },
+        { id: 304760997, artist: 'The Tokens', title: 'The Lion Sleeps Tonight' },
+        { id: 983126008, artist: "The B-52's", title: 'Rock Lobster' },
+        { id: 724214046, artist: 'Culture Club', title: 'Karma Chameleon' },
       ],
     },
     {
-      theme: 'Did covers on social media first',
+      theme: 'Songs about rainbows',
       tracks: [
-        { id: 1440826320, artist: 'Justin Bieber', title: 'Sorry' },
-        { id: 1729494488, artist: 'Madison Beer', title: 'Make You Mine' },
-        { id: 1579117772, artist: 'Bella Poarch & Sub Urban', title: 'Inferno' },
-        { id: 1724488124, artist: 'Benson Boone', title: 'Beautiful Things' },
+        { id: 281116081, artist: 'Boards of Canada', title: 'ROYGBIV' },
+        { id: 6920352, artist: "Israel Kamakawiwo'ole", title: 'Somewhere Over the Rainbow' },
+        { id: 1440805962, artist: 'Kermit the Frog', title: 'Rainbow Connection' },
+        { id: 1440918405, artist: 'Kacey Musgraves', title: 'Rainbow' },
       ],
     },
     {
@@ -44,12 +44,12 @@ const puzzle: Puzzle = {
       ],
     },
     {
-      theme: 'Artists who changed their name',
+      theme: 'Dancers turned pop stars',
       tracks: [
-        { id: 1442846328, artist: 'Kanye West', title: 'Stronger', note: 'now Ye' },
-        { id: 1683195628, artist: 'Snoop Dogg', title: 'Gin and Juice', note: 'briefly Snoop Lion' },
-        { id: 1586832573, artist: 'Cat Stevens', title: 'Peace Train', note: 'now Yusuf' },
-        { id: 1545712784, artist: 'Prince', title: 'When Doves Cry', note: 'became "the Artist"' },
+        { id: 723700423, artist: 'Paula Abdul', title: 'Straight Up' },
+        { id: 265144699, artist: 'Jennifer Lopez', title: 'Waiting for Tonight' },
+        { id: 188261029, artist: 'Shakira', title: 'Whenever, Wherever' },
+        { id: 386153478, artist: 'Usher', title: 'Yeah!' },
       ],
     },
   ],
