@@ -1,7 +1,7 @@
 import type { LoadedTrack } from '../types';
 import { CassetteDeck } from './CassetteDeck';
 
-interface TileProps {
+interface LandscapeTileProps {
   track: LoadedTrack;
   index: number;
   selected: boolean;
@@ -16,7 +16,10 @@ interface TileProps {
   onNoteChange: (val: string) => void;
 }
 
-export function Tile({
+/** Landscape-oriented cassette tile. Label spans the top, mechanism (twin
+ *  reels + tape window) sits on the left, transport buttons stack on the
+ *  right. Per HFCassetteB in the design canvas. */
+export function LandscapeTile({
   track,
   index,
   selected,
@@ -29,9 +32,9 @@ export function Tile({
   onPlay,
   onSelect,
   onNoteChange,
-}: TileProps) {
+}: LandscapeTileProps) {
   const tileClass = [
-    'tile',
+    'tile-l',
     selected && 'selected',
     playing && 'playing',
     exiting && 'exiting',
@@ -45,39 +48,32 @@ export function Tile({
 
   return (
     <div className={tileClass} data-track-id={track.id} data-testid={`tile-${track.id}`}>
-      <span className="tile-screw tl" />
-      <span className="tile-screw tr" />
-      <span className="tile-screw bl" />
-      <span className="tile-screw br" />
-
-      <div className="tile-label">
-        <div className="tile-track-no">C-90 · TYPE II</div>
+      <div className="tile-l-label">
+        <div className="tile-l-track-no">C-90 · TYPE II</div>
         <textarea
-          className="tile-label-input"
+          className="tile-l-label-input"
           placeholder="write title…"
-          rows={2}
+          rows={1}
           value={note}
           onChange={(e) => onNoteChange(e.target.value)}
           onKeyDown={(e) => {
-            // Enter inserts a newline (multi-line notes like "Song\nArtist");
-            // focus changes only on click/touch. Escape commits/blurs.
             if (e.key === 'Escape') {
               e.preventDefault();
               (e.target as HTMLTextAreaElement).blur();
             }
           }}
           onBlur={(e) => {
-            // Once not editing, show the note from the top so a long title
-            // reads from its start rather than scrolled to the caret.
             e.target.scrollTop = 0;
           }}
           aria-label={`Note for track ${index + 1}`}
         />
       </div>
 
-      <CassetteDeck playing={playing} progress={progress} />
+      <div className="tile-l-deck-wrap">
+        <CassetteDeck playing={playing} progress={progress} />
+      </div>
 
-      <div className="tile-actions">
+      <div className="tile-l-actions">
         <button
           type="button"
           className={`play-btn${playing ? ' playing' : ''}`}

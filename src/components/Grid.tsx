@@ -1,6 +1,9 @@
 import { useEffect, useRef } from 'react';
 import type { LoadedTrack } from '../types';
 import { Tile } from './Tile';
+import { LandscapeTile } from './LandscapeTile';
+
+export type TileShape = 'portrait' | 'landscape';
 
 interface GridProps {
   tracks: LoadedTrack[];
@@ -12,6 +15,8 @@ interface GridProps {
   playProgress: number;
   notes: Map<number, string>;
   disabled: boolean;
+  /** Active tile shape on mobile/tablet. Desktop (≥1024px) ignores this. */
+  tileShape: TileShape;
   onPlay: (id: number) => void;
   onSelect: (id: number) => void;
   onNoteChange: (id: number, value: string) => void;
@@ -27,6 +32,7 @@ export function Grid({
   playProgress,
   notes,
   disabled,
+  tileShape,
   onPlay,
   onSelect,
   onNoteChange,
@@ -60,25 +66,27 @@ export function Grid({
     centeredRef.current = true;
   }, [visible.length]);
 
+  const TileComponent = tileShape === 'landscape' ? LandscapeTile : Tile;
+
   return (
     <div className="bay">
-      <div className="grid" data-testid="grid" ref={gridRef}>
+      <div className={`grid grid--${tileShape}-tile`} data-testid="grid" ref={gridRef}>
         {visible.map((track, idx) => (
-        <Tile
-          key={track.id}
-          track={track}
-          index={idx}
-          selected={selected.has(track.id)}
-          playing={playingId === track.id}
-          exiting={exitingThemes.has(track.themeIdx)}
-          matched={matchedThemes.has(track.themeIdx)}
-          note={notes.get(track.id) ?? ''}
-          progress={playingId === track.id ? playProgress : 0}
-          disabled={disabled}
-          onPlay={() => onPlay(track.id)}
-          onSelect={() => onSelect(track.id)}
-          onNoteChange={(val) => onNoteChange(track.id, val)}
-        />
+          <TileComponent
+            key={track.id}
+            track={track}
+            index={idx}
+            selected={selected.has(track.id)}
+            playing={playingId === track.id}
+            exiting={exitingThemes.has(track.themeIdx)}
+            matched={matchedThemes.has(track.themeIdx)}
+            note={notes.get(track.id) ?? ''}
+            progress={playingId === track.id ? playProgress : 0}
+            disabled={disabled}
+            onPlay={() => onPlay(track.id)}
+            onSelect={() => onSelect(track.id)}
+            onNoteChange={(val) => onNoteChange(track.id, val)}
+          />
         ))}
       </div>
     </div>

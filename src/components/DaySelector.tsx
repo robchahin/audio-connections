@@ -8,9 +8,11 @@ interface DaySelectorProps {
   todayDay: number;
   currentDay: number;
   onSwitch: (day: number) => void;
+  /** Render the pill in compact form (no subline) — landscape top strip. */
+  compact?: boolean;
 }
 
-export function DaySelector({ days, todayDay, currentDay, onSwitch }: DaySelectorProps) {
+export function DaySelector({ days, todayDay, currentDay, onSwitch, compact = false }: DaySelectorProps) {
   const [open, setOpen] = useState(false);
   const pillRef = useRef<HTMLButtonElement>(null);
   const prevOpenRef = useRef(open);
@@ -33,6 +35,7 @@ export function DaySelector({ days, todayDay, currentDay, onSwitch }: DaySelecto
         todayDay={todayDay}
         open={open}
         onClick={() => setOpen((v) => !v)}
+        compact={compact}
       />
       <DayPicker
         days={days}

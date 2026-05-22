@@ -1,5 +1,7 @@
 .playwright-mcp/
 *.png
+# PWA icons are app assets that need to ship with the build.
+!public/icons/*.png
 node_modules/
 dist/
 test-results/

@@ -94,6 +94,31 @@
   /* The "today / latest puzzle" indicator stays the upstream blue rather
      than the cassette brass accent, so it reads as a distinct status. */
   --day-today:          #4a9eff;
+
+  /* ---- RESPONSIVE BREAKPOINTS (mobile/tablet PoC) -----------------------
+     Tuning knobs per the responsive PoC handoff. Desktop is always ≥ tablet;
+     all responsive rules apply below it. Narrow phone gets a 1-col fallback
+     for landscape tiles. */
+  --bp-narrow: 480px;
+  --bp-tablet: 1024px;
+
+  /* ---- MOBILE CHROME (sticky bars on the short edge) -------------------- */
+  --chrome-bg:           rgba(15, 16, 19, 0.92);
+  --chrome-raised:       #1f2026;
+  --chrome-panel:        #0f1013;
+  --chrome-border:       #2a2b32;
+  --chrome-border-soft:  #1d1e24;
+  --warn:                #dac96a;
+  --done:                #f9df6d;
+  --accent-blue:         #4a9eff;
+  --accent-blue-soft:    rgba(74, 158, 255, 0.12);
+  /* Landscape strip heights. 22px (per the design canvas mock) is too
+     thin for the day pill to render or remain tap-target-sized; 36px
+     gives the compact pill room and clears Apple's ~44px guideline
+     when combined with the device safe-area inset. */
+  --chrome-top-h:        36px;
+  --chrome-left-w:       52px;     /* landscape vertical solved bar */
+  --chrome-right-w:      116px;    /* landscape vertical cue+actions column */
 }
 @media (prefers-reduced-motion: reduce) {
   :root {
@@ -110,18 +135,12 @@ body {
   color: var(--text-primary);
   margin: 0;
   padding: 0;
-  min-height: 100vh;
+  /* dvh, not vh: avoids overlap with the mobile browser URL bar when it
+     animates in/out. On desktop dvh === vh. */
+  min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
 }
-.app-container {
-  max-width: 740px;
-  margin: 0 auto;
-  padding: 28px 20px 40px;
-}
 @media (max-width: 600px) {
-  .app-container {
-    padding: 18px 14px 32px;
-  }
   /* Bay/grid keep the 4-col 130px floor + horizontal scroll (contract). */
   .bay { padding: 10px 8px; }
   .grid { gap: 8px; }
@@ -129,7 +148,6 @@ body {
   .tile-label { margin: 7px 7px 0; padding: 6px 8px 7px; }
   .tile-screw.bl, .tile-screw.br { display: none; }
   .tile-track-no { font-size: 7px; letter-spacing: 0.16em; }
-  .tile-label-input:not(:placeholder-shown) { font-size: 16px; }
   .subtitle { font-size: 12px; margin: 12px 4px 16px; }
   /* Solved labels: shrink the SIDE rail. */
   .solved-row { padding: 10px 12px 12px 56px; }
@@ -178,7 +196,7 @@ h1 {
   font-family: var(--font-mono);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
   font-size: 12px;
   text-align: center;
 }
@@ -186,17 +204,24 @@ h1 {
   text-align: center;
   font-size: 12px;
   color: #888;
-  margin: -4px auto 14px;
+  margin: 4px auto 8px;
   min-height: 16px;
   font-variant-numeric: tabular-nums;
 }
 .status {
-  max-width: 720px;
+  max-width: 940px;
   margin: 4px auto 8px;
   color: #ffaa55;
   min-height: 20px;
   text-align: center;
   font-size: 14px;
+}
+/* Collapse the toast when nothing's queued so it doesn't reserve a
+   strip of whitespace between subtitle and grid (desktop) or between
+   cue tray and submit (mobile). */
+.status:empty {
+  min-height: 0;
+  margin: 0;
 }
 /* Recessed cartridge bay milled into the chassis, around the grid. */
 .bay {
@@ -205,7 +230,7 @@ h1 {
   border-radius: 6px;
   padding: 14px 12px 16px;
   margin: 0 auto 20px;
-  max-width: 720px;
+  max-width: 940px;
   box-shadow:
     inset 0 2px 8px rgba(0, 0, 0, 0.7),
     inset 0 -1px 0 rgba(255, 255, 255, 0.02),
@@ -534,9 +559,11 @@ h1 {
   background: transparent;
   border: none;
   color: var(--paper-ink);
-  /* mono "typewriter" when empty, handwriting when filled */
+  /* mono "typewriter" when empty, handwriting when filled. 16px in both
+     states avoids iOS WebKit's focus-zoom (triggers at <16px) and is
+     consistent across desktop and touch. */
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 16px;
   line-height: 1.3;
   letter-spacing: 0.02em;
   padding: 0;
@@ -555,7 +582,10 @@ h1 {
   color: rgba(26, 22, 16, 0.32);
   font-style: italic;
   font-family: var(--font-mono);
-  font-size: 11px;
+  /* Smaller than the input's 16px so the unfilled label feels quiet —
+     ::placeholder is ignored by iOS's input-focus zoom heuristic, so
+     this doesn't reintroduce the auto-zoom bug. */
+  font-size: 13px;
 }
 .tile-label-input:focus {
   outline: none;
@@ -671,7 +701,7 @@ h1 {
 }
 /* ── Controls — chunky transport keys ────────────────────────────────── */
 .controls {
-  max-width: 720px;
+  max-width: 940px;
   margin: 6px auto 16px;
   display: flex;
   gap: 14px;
@@ -749,7 +779,7 @@ h1 {
 }
 /* ── Solved rows — printed cassette tape labels ──────────────────────── */
 .solved {
-  max-width: 720px;
+  max-width: 940px;
   margin: 0 auto 10px;
   display: flex;
   flex-direction: column;
@@ -833,7 +863,7 @@ h1 {
 }
 /* ── Mistakes — 4-LED VU-style meter ─────────────────────────────────── */
 .mistakes-row {
-  max-width: 720px;
+  max-width: 940px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -885,7 +915,7 @@ h1 {
 }
 /* ── EndPanel — printed J-card insert ────────────────────────────────── */
 .end-panel {
-  max-width: 720px;
+  max-width: 940px;
   margin: 16px auto;
   background: linear-gradient(180deg, var(--paper-warm) 0%, var(--paper) 100%);
   border: 1px solid var(--paper-shadow);
@@ -1430,3 +1460,855 @@ h1 {
 @media (max-width: 520px) {
   .day-picker-grid { grid-template-columns: repeat(5, 1fr); }
 }
+
+/* Landscape mobile: the pill lives at the right edge of the top strip,
+   so absolute-positioning the picker relative to the pill makes it
+   overflow the viewport to the right — creating horizontal scroll the
+   user can't get back from. Anchor to the viewport instead. */
+@media (max-width: 1023.98px) and (pointer: coarse) and (orientation: landscape) {
+  .day-picker {
+    position: fixed;
+    top: calc(var(--chrome-top-h) + 8px);
+    left: 50%;
+    transform: translateX(-50%) translateY(-4px);
+    z-index: 40;
+  }
+  .day-picker.open {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* Status toast in the narrow right column: reserve a fixed slot so
+     content-length changes (e.g. "Loading songs…" vs empty vs "One
+     away!") don't reflow the mistakes/submit cluster below it. Single
+     line + ellipsis keeps text fitted to the 96px-inner column. */
+  .chrome-right .status,
+  .chrome-right .status:empty {
+    min-height: 14px;
+    margin: 0;
+    padding: 0;
+    font-size: 10px;
+    line-height: 1.4;
+    text-align: center;
+    max-width: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* ==========================================================================
+   RESPONSIVE LAYOUT POC — applies only at < 1024px (--bp-tablet).
+   See design_handoff_responsive_poc/README.md for the spec.
+   Desktop (≥ 1024px) keeps the existing chrome and 4×4 grid untouched.
+   ========================================================================== */
+
+/* ----- App shell — desktop default. Was 740px to match the original
+   layout; bumped to 960px so the cassette grid feels less squeezed on
+   modern monitors. Chrome containers (.bay, .solved, .controls, etc.)
+   moved to 940px in lockstep. */
+.app-shell {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 28px 20px 40px;
+}
+.chrome-top-mobile,
+.chrome-bottom-mobile,
+.chrome-left,
+.chrome-right {
+  display: none;
+}
+
+/* ----- Grid column rules (mobile/tablet only) -------------------------- */
+@media (max-width: 1023.98px) and (pointer: coarse) {
+  .grid--portrait-tile {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .grid--landscape-tile {
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 480px) {
+    .grid--landscape-tile {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+}
+
+/* ----- App shell at < 1024px — portrait orientation default ------------ */
+@media (max-width: 1023.98px) and (pointer: coarse) {
+  /* Desktop chrome OFF */
+  .chrome-top-desktop,
+  .chrome-bottom-desktop {
+    display: none;
+  }
+  .chrome-main .solved {
+    display: none;
+  }
+
+  /* Mobile chrome ON */
+  .chrome-top-mobile {
+    display: block;
+  }
+  .chrome-bottom-mobile {
+    display: block;
+  }
+
+  /* Lock body to viewport height so .chrome-main is the only scroll
+     container. Without this, the body itself grows with content and the
+     "sticky" chrome regions ride the page scroll instead of pinning to
+     the viewport edges. dvh tracks the dynamic viewport so the layout
+     breathes when the browser URL bar animates in/out. */
+  html,
+  body {
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  /* Full-bleed shell with stacked rows */
+  .app-shell {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    height: 100dvh;
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto;
+    background: var(--bg-room);
+    color: var(--text-primary);
+  }
+
+  .chrome-top {
+    grid-row: 1;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--chrome-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--chrome-border);
+  }
+  .chrome-main {
+    grid-row: 2;
+    min-height: 0;
+    overflow: auto;
+    padding: 6px 12px 12px;
+  }
+  .chrome-bottom {
+    grid-row: 3;
+    position: sticky;
+    bottom: 0;
+    z-index: 20;
+    background: var(--chrome-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-top: 1px solid var(--chrome-border-soft);
+  }
+
+  /* The .bay milled-recess wrapping makes the grid feel like a desktop
+     deck — visually heavy for a phone. Strip it on mobile. The base
+     .bay has max-width: 940px which would otherwise leave whitespace on
+     the right between 940–1024px, so explicitly unset that here. */
+  .chrome-main .bay {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    margin: 0;
+    max-width: none;
+  }
+  .chrome-main .grid {
+    padding: 0;
+    overflow: visible;
+  }
+
+  /* The landscape top-strip variant is hidden in portrait. */
+  .chrome-top-mobile--landscape {
+    display: none;
+  }
+}
+
+/* ----- Landscape orientation at < 1024px ------------------------------- */
+@media (max-width: 1023.98px) and (pointer: coarse) and (orientation: landscape) {
+  .app-shell {
+    grid-template-rows: var(--chrome-top-h) 1fr;
+    grid-template-columns: var(--chrome-left-w) 1fr var(--chrome-right-w);
+  }
+  .chrome-top {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    height: var(--chrome-top-h);
+    /* Day picker drops downward out of this row, so don't clip. The
+       chrome-top stripe is otherwise tightly sized to its content. */
+    overflow: visible;
+    z-index: 30;
+    /* CSS spec: backdrop-filter creates a containing block for fixed-
+       positioned descendants. That was anchoring the (supposedly) fixed
+       day picker to chrome-top instead of the viewport — so it still
+       overflowed horizontally. Use a solid-ish background here instead. */
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: var(--chrome-panel);
+  }
+  .chrome-top-mobile--portrait {
+    display: none;
+  }
+  .chrome-top-mobile--landscape {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 0 56px 0 28px;
+    height: 100%;
+  }
+  .chrome-left {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    grid-row: 2;
+    grid-column: 1;
+    background: var(--chrome-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-right: 1px solid var(--chrome-border);
+    padding: 14px 6px;
+    gap: 8px;
+    /* Solved popover opens rightward out of this column, so don't clip.
+       At most 4 squircles ever stack here so overflow shouldn't matter. */
+    overflow: visible;
+    z-index: 25;
+  }
+  .chrome-main {
+    grid-row: 2;
+    grid-column: 2;
+    padding: 8px 10px;
+  }
+  .chrome-right {
+    display: flex;
+    flex-direction: column;
+    grid-row: 2;
+    grid-column: 3;
+    background: var(--chrome-raised);
+    border-left: 1px solid var(--chrome-border);
+    padding: 10px;
+    gap: 8px;
+    min-height: 0;
+    overflow-y: auto;
+  }
+  .chrome-bottom {
+    display: none;
+  }
+
+  /* When 0 themes are solved the SolvedBar renders nothing — collapse the
+     left chrome to 0 width so the grid takes the space. */
+  .app-shell[data-has-solved='false'] {
+    grid-template-columns: 0 1fr var(--chrome-right-w);
+  }
+  .app-shell[data-has-solved='false'] .chrome-left {
+    display: none;
+  }
+}
+
+/* ----- SolvedBar (mobile chrome) --------------------------------------- */
+.solved-bar {
+  display: flex;
+  gap: 8px;
+}
+.solved-bar--horizontal {
+  flex-direction: row;
+  align-items: center;
+  padding: 6px 14px;
+}
+.solved-bar--vertical {
+  flex-direction: column;
+  align-items: center;
+}
+.solved-bar-label {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.solved-squircle-wrap {
+  position: relative;
+}
+.solved-squircle {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--text-muted);
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 800;
+  color: rgba(0, 0, 0, 0.65);
+  box-shadow:
+    inset 0 -1px 0 rgba(0, 0, 0, 0.18),
+    0 1px 2px rgba(0, 0, 0, 0.4);
+  transition: transform 80ms ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.solved-squircle:active {
+  transform: translateY(1px);
+}
+.solved-squircle.theme-0 { background: var(--theme-0); }
+.solved-squircle.theme-1 { background: var(--theme-1); }
+.solved-squircle.theme-2 { background: var(--theme-2); }
+.solved-squircle.theme-3 { background: var(--theme-3); }
+
+.solved-popover {
+  position: absolute;
+  z-index: 30;
+  min-width: 240px;
+  max-width: 320px;
+  background: var(--chrome-raised);
+  border: 1px solid var(--chrome-border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+}
+.solved-popover--horizontal {
+  top: calc(100% + 6px);
+  left: 0;
+}
+.solved-popover--vertical {
+  top: 0;
+  left: calc(100% + 8px);
+}
+.solved-popover-theme {
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.18);
+  padding-bottom: 4px;
+  margin-bottom: 6px;
+}
+.solved-popover-tracks {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.solved-popover-no {
+  color: var(--text-muted);
+  font-weight: 700;
+}
+.solved-popover-artist {
+  color: var(--text-secondary);
+}
+
+/* ----- CueTray (mobile chrome) ----------------------------------------- */
+.cue-tray {
+  position: relative;
+  background: var(--chrome-raised);
+}
+.cue-tray--horizontal {
+  border-top: 1px solid var(--chrome-border);
+}
+.cue-tray--vertical {
+  background: transparent;
+}
+.cue-tray-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  padding: 8px 14px;
+  width: 100%;
+  text-align: left;
+}
+.cue-tray--vertical .cue-tray-toggle {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 0;
+}
+.cue-tray-count {
+  color: var(--text-muted);
+  font-weight: 700;
+}
+.cue-tray-count.on {
+  color: var(--warn);
+}
+.cue-tray-dots {
+  display: inline-flex;
+  gap: 4px;
+}
+.cue-tray--vertical .cue-tray-dots {
+  flex-direction: column;
+}
+.cue-tray-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: 1px dashed #3a3b42;
+  background: transparent;
+}
+.cue-tray-dot.on {
+  background: var(--warn);
+  border-color: var(--warn);
+}
+.cue-tray-expand {
+  position: absolute;
+  background: var(--chrome-raised);
+  border: 1px solid var(--chrome-border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.5);
+  z-index: 25;
+}
+.cue-tray-expand--horizontal {
+  left: 8px;
+  right: 8px;
+  bottom: calc(100% + 4px);
+}
+.cue-tray-expand--vertical {
+  top: 0;
+  right: calc(100% + 12px);
+  width: 220px;
+}
+.cue-tray-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-primary);
+}
+.cue-tray-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+.cue-tray-item-note {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cue-tray-item-placeholder {
+  color: var(--text-muted);
+  font-style: italic;
+}
+.cue-tray-uncue {
+  width: 22px;
+  height: 22px;
+  background: transparent;
+  border: 1px solid var(--chrome-border);
+  border-radius: 4px;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+}
+.cue-tray-uncue:hover {
+  color: var(--text-primary);
+}
+
+/* ----- MobileActionRow (mobile chrome) -------------------------------- */
+.mar {
+  padding: 10px 12px 14px;
+}
+.mar--vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0;
+}
+.mar-mistakes {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  justify-content: center;
+}
+.mar--vertical .mar-mistakes {
+  flex-direction: column;
+  align-items: flex-start;
+  margin: 0;
+  gap: 4px;
+}
+.mar-mistakes-label {
+  font-weight: 700;
+}
+.mar-mistakes-strip {
+  display: inline-flex;
+  gap: 3px;
+}
+.mar--vertical .mar-mistakes-strip {
+  width: 100%;
+}
+.mar-mistake-dot {
+  width: 18px;
+  height: 8px;
+  border-radius: 1px;
+  border: 1px solid var(--chrome-border-soft);
+  background: #2a2b32;
+}
+.mar--vertical .mar-mistake-dot {
+  flex: 1;
+}
+.mar-mistake-dot.lit {
+  background: linear-gradient(180deg, #c4b58e 0%, #8a7a4a 100%);
+  border-color: #6a5a3a;
+}
+.mar-mistakes-left {
+  color: var(--text-secondary);
+}
+.mar-buttons {
+  display: flex;
+  gap: 8px;
+}
+.mar--vertical .mar-buttons {
+  flex-direction: column;
+}
+.mar-btn {
+  flex: 1;
+  height: 44px;
+  background: var(--chrome-raised);
+  border: 1px solid var(--chrome-border);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+.mar--vertical .mar-btn {
+  height: 28px;
+  font-size: 10px;
+  flex: 0 0 auto;
+}
+.mar-btn-submit {
+  flex: 2;
+  background: var(--accent-blue);
+  border-color: var(--accent-blue);
+  color: #fff;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+.mar--vertical .mar-btn-submit {
+  flex: 0 0 auto;
+}
+.mar-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ----- Landscape tile -------------------------------------------------- */
+.tile-l {
+  position: relative;
+  background:
+    repeating-linear-gradient(0deg,
+      rgba(255, 255, 255, 0.018) 0 1px,
+      transparent 1px 4px),
+    linear-gradient(180deg, #2c2d32 0%, #1a1b1f 100%);
+  border: 2px solid #0a0b0e;
+  border-radius: 6px;
+  padding: 8px 10px;
+  display: grid;
+  grid-template-columns: 1fr 64px;
+  grid-template-rows: auto 1fr;
+  column-gap: 10px;
+  row-gap: 6px;
+  min-height: 96px;
+  transition: transform var(--spring), box-shadow var(--ease), border-color var(--ease);
+  box-shadow:
+    inset 0 1px 0 var(--bevel-light),
+    inset 0 -1px 0 var(--bevel-dark),
+    0 3px 8px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+}
+.tile-l.selected {
+  border-color: var(--accent-blue);
+  box-shadow:
+    0 0 0 2px var(--accent-blue-soft),
+    inset 0 1px 0 var(--bevel-light),
+    0 0 16px rgba(74, 158, 255, 0.25);
+}
+.tile-l.exiting {
+  opacity: 0;
+  transform: translateX(40px) scale(0.9);
+  transition:
+    opacity var(--exit-anim-ms) ease,
+    transform var(--exit-anim-ms) cubic-bezier(.4, 0, .7, .2);
+  pointer-events: none;
+}
+.tile-l.matched-theme-0 { --pulse: var(--theme-0); }
+.tile-l.matched-theme-1 { --pulse: var(--theme-1); }
+.tile-l.matched-theme-2 { --pulse: var(--theme-2); }
+.tile-l.matched-theme-3 { --pulse: var(--theme-3); }
+.tile-l.matched {
+  animation: matchPulse var(--match-pulse-ms) ease-out;
+  border-color: var(--pulse);
+  pointer-events: none;
+  z-index: 2;
+}
+.tile-l-label {
+  grid-column: 1 / -1;
+  background:
+    repeating-linear-gradient(0deg,
+      transparent 0 12px,
+      rgba(106, 90, 58, 0.16) 12px 13px),
+    linear-gradient(180deg, var(--paper-warm) 0%, var(--paper) 100%);
+  border: 1px solid var(--paper-shadow);
+  border-radius: 2px;
+  padding: 4px 8px 5px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.tile-l-track-no {
+  font-family: var(--font-mono);
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--paper-ink-soft);
+}
+.tile-l-label-input {
+  flex: 1;
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: var(--paper-ink);
+  font-family: var(--font-mono);
+  font-size: 16px;
+  line-height: 1.2;
+  padding: 0;
+  outline: none;
+  resize: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tile-l-label-input::placeholder {
+  color: rgba(26, 22, 16, 0.32);
+  font-style: italic;
+  font-size: 13px;
+}
+.tile-l-label-input:not(:placeholder-shown) {
+  font-family: var(--font-hand);
+  font-size: 17px;
+  color: #0d3a72;
+  white-space: nowrap;
+}
+.tile-l-deck-wrap {
+  background: #0a0b0e;
+  border-radius: 3px;
+  padding: 4px 6px;
+  display: flex;
+  align-items: center;
+  min-height: 36px;
+}
+.tile-l-deck-wrap .cassette-deck {
+  margin: 0;
+  height: 28px;
+  width: 100%;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+.tile-l-deck-wrap .cassette-deck::before,
+.tile-l-deck-wrap .cassette-deck::after {
+  display: none;
+}
+.tile-l-deck-wrap .reel {
+  width: 22px;
+  height: 22px;
+}
+.tile-l-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-self: center;
+}
+.tile-l-actions .play-btn,
+.tile-l-actions .select-btn {
+  height: 22px;
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  padding: 0 4px;
+}
+
+/* ----- Day pill compact form ------------------------------------------ */
+.day-pill--compact {
+  min-width: 0;
+  padding: 4px 4px 4px 10px;
+  gap: 8px;
+}
+.day-pill--compact .day-pill-primary {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+}
+.day-pill--compact .day-pill-counter {
+  padding: 2px 6px;
+  font-size: 9px;
+}
+
+/* ----- Mobile chrome top contents ------------------------------------- */
+.chrome-top-mobile--portrait {
+  padding: 8px 14px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: stretch;
+}
+.chrome-top-mobile--portrait .day-pill-wrap,
+.chrome-top-mobile--landscape .day-pill-wrap {
+  margin: 0;
+}
+.chrome-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-align: center;
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+.chrome-byline {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-align: center;
+}
+.chrome-title-compact {
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  white-space: nowrap;
+  margin: 0;
+}
+/* Author credit beside the compact title — mirrors the portrait byline's
+   muted mono treatment, without the date (inferrable from the day pill). */
+.chrome-title-group {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+.chrome-author-compact {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ----- Mobile chrome bottom ------------------------------------------- */
+.chrome-bottom-mobile {
+  display: flex;
+  flex-direction: column;
+}
+
+/* CueTray + Erase Tape share one row. Reset is pinned to the right edge
+   so the cue count/dots get all the remaining width. */
+.cue-row {
+  display: flex;
+  align-items: stretch;
+  background: var(--chrome-raised);
+  border-top: 1px solid var(--chrome-border);
+}
+.cue-row .cue-tray {
+  flex: 1;
+  background: transparent;
+}
+.cue-row .cue-tray--horizontal {
+  border-top: none;
+}
+.cue-row .reset-row {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  padding: 0 6px;
+  border-left: 1px solid var(--chrome-border);
+  margin: 0;
+}
+.cue-row .reset-btn {
+  padding: 6px 8px;
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  gap: 6px;
+}
+
+/* Landscape chrome-right places Reset at the bottom of the stack. It's
+   too narrow (~96px inner) for the full toggle-decoration + label, so
+   drop the toggle and use a smaller font. */
+.chrome-right .reset-row {
+  margin: 0;
+  justify-content: stretch;
+}
+.chrome-right .reset-btn {
+  width: 100%;
+  padding: 6px 4px;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  gap: 4px;
+}
+.chrome-right .reset-btn .toggle {
+  display: none;
+}
+
+/* ----- Right column spacer (landscape) -------------------------------- */
+.chrome-right-spacer {
+  flex: 1;
+}
+
+/* ----- Safe areas ----------------------------------------------------- */
+@media (max-width: 1023.98px) and (pointer: coarse) {
+  .chrome-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  .chrome-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+@media (max-width: 1023.98px) and (pointer: coarse) and (orientation: landscape) {
+  .chrome-left {
+    padding-left: max(6px, env(safe-area-inset-left));
+  }
+  .chrome-right {
+    padding-right: max(10px, env(safe-area-inset-right));
+  }
+}
+
+/* ----- Reduce motion on the new chrome -------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .tile-l.matched { animation: none; }
+  .tile-l.exiting { transition: opacity 1ms; transform: none; }
+}
+
+

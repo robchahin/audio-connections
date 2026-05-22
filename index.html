@@ -2,10 +2,21 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <!-- App overwrites this at runtime with the current puzzle's day + author.
        Keep the static fallback generic so it can't drift as puzzles ship. -->
   <title>Audio Connections</title>
+  <!-- PWA: once "Add to Home Screen"d, display:standalone in the manifest
+       removes the browser URL bar entirely. -->
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="theme-color" content="#0f1013" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Audio Connections" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="48x48" href="/icons/favicon-48.png" />
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link

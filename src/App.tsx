@@ -6,18 +6,30 @@ import { formatPuzzleDate } from './format';
 import { useAudio } from './hooks/useAudio';
 import { useKonami } from './hooks/useKonami';
 import { usePuzzleSession } from './hooks/usePuzzleSession';
+import { useIsMobile, useOrientation } from './hooks/useOrientation';
 import { DaySelector } from './components/DaySelector';
 import { Countdown } from './components/Countdown';
-import { Grid } from './components/Grid';
+import { Grid, type TileShape } from './components/Grid';
 import { SolvedList } from './components/SolvedList';
+import { SolvedBar } from './components/SolvedBar';
 import { MistakesDisplay } from './components/MistakesDisplay';
 import { Controls } from './components/Controls';
+import { CueTray } from './components/CueTray';
+import { MobileActionRow } from './components/MobileActionRow';
 import { EndPanel } from './components/EndPanel';
 import { ResetButton } from './components/ResetButton';
 
 const STATUS_TIMEOUT_MS = 10000;
 
+/** Active tile shape on mobile/tablet (< 1024px). Desktop ignores this and
+ *  always renders the existing 4×4 portrait-cassette grid. The PoC ships
+ *  both shapes — flip this constant to compare. */
+const TILE_SHAPE: TileShape = 'portrait';
+
 export function App() {
+  const orientation = useOrientation();
+  const isMobile = useIsMobile();
+
   const [currentIndex, setCurrentIndex] = useState(() => {
     const latestIdx = latestReleasedIndex();
     const latest = puzzles[latestIdx]!;
@@ -134,64 +146,225 @@ export function App() {
   const isLoading = session.state.tracks.length === 0;
   const tilesDisabled = session.state.gameOver || isLoading || session.matchedThemes.size > 0;
 
+  // The mobile chrome lives in dedicated regions of the app shell. Chrome
+  // row/column axis is parameterized per the PoC handoff — the JSX picks
+  // 'horizontal' (portrait) or 'vertical' (landscape) at each call site.
+  const hasSolved = session.solvedThemes.size > 0;
+
+  const onDaySwitch = (day: number) => {
+    const idx = puzzles.findIndex((p) => p.day === day);
+    if (idx >= 0) switchDay(idx);
+  };
+
+  // Status toast renders inside whichever chrome region holds the submit
+  // button — that's where the player's attention is when they trigger
+  // the messages it shows. Always rendered (empty string OK) so the
+  // data-testid stays present for tests.
+  const statusToast = (
+    <div className="status" data-testid="status">
+      {statusMsg || session.state.loadStatus}
+    </div>
+  );
+
   return (
-    <div className="app-container">
-      <h1 data-testid="puzzle-heading">{heading}</h1>
-      <div className="byline">
-        by <span data-testid="puzzle-author">{puzzle.author}</span> · <span data-testid="puzzle-date">{dateText}</span>
-      </div>
-      <DaySelector
-        days={dayStates}
-        todayDay={todayDay}
-        currentDay={puzzle.day}
-        onSwitch={(day) => {
-          const idx = puzzles.findIndex((p) => p.day === day);
-          if (idx >= 0) switchDay(idx);
-        }}
-      />
-      <Countdown puzzles={puzzles} unlockedDays={unlockedDays} onUnlock={onNaturalUnlock} />
-      <div className="subtitle">
-        Find four groups of four · PLAY to preview · CUE to mark · SUBMIT when all four are cued
-      </div>
-      <SolvedList
-        themes={puzzle.themes}
-        solvedThemes={session.solvedThemes}
-        tracks={session.state.tracks}
-        guessHistory={session.state.guessHistory}
-      />
-      {session.state.gameOver && (
-        <EndPanel
-          won={session.won}
-          day={puzzle.day}
-          guessHistory={session.state.guessHistory}
-          author={puzzle.author}
-          date={dateText}
-        />
+    <div
+      className="app-shell"
+      data-orientation={orientation}
+      data-has-solved={hasSolved ? 'true' : 'false'}
+    >
+      {/* TOP CHROME — at ≥ 1024px renders the full desktop header; at < 1024px
+          renders the mobile variant. Only the active variant is in the DOM
+          (avoids duplicate test IDs and stale chrome). */}
+      <header className="chrome-top">
+        {!isMobile && (
+          <div className="chrome-top-desktop">
+            <h1 data-testid="puzzle-heading">{heading}</h1>
+            <div className="byline">
+              by <span data-testid="puzzle-author">{puzzle.author}</span> ·{' '}
+              <span data-testid="puzzle-date">{dateText}</span>
+            </div>
+            <DaySelector
+              days={dayStates}
+              todayDay={todayDay}
+              currentDay={puzzle.day}
+              onSwitch={onDaySwitch}
+            />
+            <Countdown puzzles={puzzles} unlockedDays={unlockedDays} onUnlock={onNaturalUnlock} />
+            <div className="subtitle">
+              Find four groups of four · PLAY to preview · CUE to mark · SUBMIT when all four are cued
+            </div>
+          </div>
+        )}
+
+        {isMobile && orientation === 'portrait' && (
+          <div className="chrome-top-mobile chrome-top-mobile--portrait">
+            <h1 className="chrome-title" data-testid="puzzle-heading">
+              Audio Connections {puzzle.day}
+            </h1>
+            <div className="chrome-byline">
+              by <span data-testid="puzzle-author">{puzzle.author}</span> ·{' '}
+              <span data-testid="puzzle-date">{dateText}</span>
+            </div>
+            <DaySelector
+              days={dayStates}
+              todayDay={todayDay}
+              currentDay={puzzle.day}
+              onSwitch={onDaySwitch}
+            />
+            <Countdown puzzles={puzzles} unlockedDays={unlockedDays} onUnlock={onNaturalUnlock} />
+            <SolvedBar
+              themes={puzzle.themes}
+              solvedThemes={session.solvedThemes}
+              tracks={session.state.tracks}
+              guessHistory={session.state.guessHistory}
+              orientation="horizontal"
+            />
+          </div>
+        )}
+
+        {isMobile && orientation === 'landscape' && (
+          <div className="chrome-top-mobile chrome-top-mobile--landscape">
+            <div className="chrome-title-group">
+              <h1 className="chrome-title-compact" data-testid="puzzle-heading">
+                Audio Connections {puzzle.day}
+              </h1>
+              <span className="chrome-author-compact">
+                by <span data-testid="puzzle-author">{puzzle.author}</span>
+              </span>
+            </div>
+            <DaySelector
+              days={dayStates}
+              todayDay={todayDay}
+              currentDay={puzzle.day}
+              onSwitch={onDaySwitch}
+              compact
+            />
+          </div>
+        )}
+      </header>
+
+      {/* LEFT CHROME — landscape only. Vertical SolvedBar. Collapses to 0
+          width when nothing's solved so the grid takes the space. */}
+      {isMobile && orientation === 'landscape' && (
+        <aside className="chrome-left">
+          {hasSolved && (
+            <SolvedBar
+              themes={puzzle.themes}
+              solvedThemes={session.solvedThemes}
+              tracks={session.state.tracks}
+              guessHistory={session.state.guessHistory}
+              orientation="vertical"
+            />
+          )}
+        </aside>
       )}
-      <Grid
-        tracks={session.state.tracks}
-        selected={session.state.selected}
-        solvedThemes={session.solvedThemes}
-        exitingThemes={session.exitingThemes}
-        matchedThemes={session.matchedThemes}
-        playingId={audio.playingId}
-        playProgress={audio.playProgress}
-        notes={session.state.notes}
-        disabled={tilesDisabled}
-        onPlay={audio.togglePlay}
-        onSelect={session.toggleSelect}
-        onNoteChange={session.setNote}
-      />
-      <div className="status" data-testid="status">{statusMsg || session.state.loadStatus}</div>
-      <MistakesDisplay mistakes={session.state.mistakes} max={MAX_MISTAKES} />
-      <Controls
-        selectedCount={selectedCount}
-        gameOver={session.state.gameOver}
-        won={session.won}
-        onDeselect={session.deselectAll}
-        onSubmit={session.submit}
-      />
-      <ResetButton onReset={session.resetPuzzle} />
+
+      {/* MAIN — grid + end panel + (desktop) solved banners. */}
+      <main className="chrome-main">
+        <SolvedList
+          themes={puzzle.themes}
+          solvedThemes={session.solvedThemes}
+          tracks={session.state.tracks}
+          guessHistory={session.state.guessHistory}
+        />
+        {session.state.gameOver && (
+          <EndPanel
+            won={session.won}
+            day={puzzle.day}
+            guessHistory={session.state.guessHistory}
+            author={puzzle.author}
+            date={dateText}
+          />
+        )}
+        <Grid
+          tracks={session.state.tracks}
+          selected={session.state.selected}
+          solvedThemes={session.solvedThemes}
+          exitingThemes={session.exitingThemes}
+          matchedThemes={session.matchedThemes}
+          playingId={audio.playingId}
+          playProgress={audio.playProgress}
+          notes={session.state.notes}
+          disabled={tilesDisabled}
+          tileShape={TILE_SHAPE}
+          onPlay={audio.togglePlay}
+          onSelect={session.toggleSelect}
+          onNoteChange={session.setNote}
+        />
+      </main>
+
+      {/* RIGHT CHROME — landscape only. Vertical cue tray + mistakes +
+          deselect/submit stacked, with Erase Tape pinned at the bottom. */}
+      {isMobile && orientation === 'landscape' && (
+        <aside className="chrome-right">
+          <CueTray
+            tracks={session.state.tracks}
+            selected={session.state.selected}
+            notes={session.state.notes}
+            orientation="vertical"
+            onDeselect={session.toggleSelect}
+          />
+          <div className="chrome-right-spacer" />
+          {statusToast}
+          <MobileActionRow
+            mistakes={session.state.mistakes}
+            maxMistakes={MAX_MISTAKES}
+            selectedCount={selectedCount}
+            gameOver={session.state.gameOver}
+            won={session.won}
+            orientation="vertical"
+            onDeselect={session.deselectAll}
+            onSubmit={session.submit}
+          />
+          <ResetButton onReset={session.resetPuzzle} />
+        </aside>
+      )}
+
+      {/* BOTTOM CHROME — desktop controls at ≥ 1024px; portrait-phone cue
+          tray + action row at < 1024px portrait. In landscape the side
+          columns carry these, so chrome-bottom is empty. */}
+      <footer className="chrome-bottom">
+        {!isMobile && (
+          <div className="chrome-bottom-desktop">
+            <MistakesDisplay mistakes={session.state.mistakes} max={MAX_MISTAKES} />
+            {statusToast}
+            <Controls
+              selectedCount={selectedCount}
+              gameOver={session.state.gameOver}
+              won={session.won}
+              onDeselect={session.deselectAll}
+              onSubmit={session.submit}
+            />
+            <ResetButton onReset={session.resetPuzzle} />
+          </div>
+        )}
+
+        {isMobile && orientation === 'portrait' && (
+          <div className="chrome-bottom-mobile">
+            <div className="cue-row">
+              <CueTray
+                tracks={session.state.tracks}
+                selected={session.state.selected}
+                notes={session.state.notes}
+                orientation="horizontal"
+                onDeselect={session.toggleSelect}
+              />
+              <ResetButton onReset={session.resetPuzzle} />
+            </div>
+            {statusToast}
+            <MobileActionRow
+              mistakes={session.state.mistakes}
+              maxMistakes={MAX_MISTAKES}
+              selectedCount={selectedCount}
+              gameOver={session.state.gameOver}
+              won={session.won}
+              orientation="horizontal"
+              onDeselect={session.deselectAll}
+              onSubmit={session.submit}
+            />
+          </div>
+        )}
+      </footer>
     </div>
   );
 }

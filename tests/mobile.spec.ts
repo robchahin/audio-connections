@@ -74,49 +74,41 @@ test.describe('Mobile (Pixel 5) layout', () => {
     expect(offenders, JSON.stringify(offenders)).toEqual([]);
   });
 
-  test('grid scrolls horizontally when columns do not fit', async ({ page }) => {
+  // The responsive PoC (May 2026) replaced the 4-col-with-horizontal-scroll
+  // mobile grid with a 2-col edge-to-edge grid below 1024px, so the prior
+  // "scrolls horizontally" tests no longer apply. Their reframed
+  // counterparts below assert the new behavior.
+
+  test('grid fits within the viewport (no horizontal scroll)', async ({ page }) => {
     const { scrollWidth, clientWidth } = await page.evaluate(() => {
       const grid = document.querySelector<HTMLElement>('.grid')!;
       return { scrollWidth: grid.scrollWidth, clientWidth: grid.clientWidth };
     });
-    expect(scrollWidth).toBeGreaterThan(clientWidth);
+    // 1px tolerance — sub-pixel rounding sometimes gives scrollWidth a hair
+    // more than clientWidth even when nothing actually overflows.
+    expect(scrollWidth - clientWidth).toBeLessThanOrEqual(1);
   });
 
-  test('selected tile at scroll edge keeps its accent border visible', async ({ page }) => {
-    // Scroll the grid all the way left so the first visible tile sits flush
-    // against the grid's left clip edge, then select it. With the grid's
-    // inset padding, the selected border should still render inside the
-    // grid's visible area (no left-edge clipping).
+  test('selected tile keeps its accent border within the grid bounds', async ({ page }) => {
     const result = await page.evaluate(() => {
       const grid = document.querySelector<HTMLElement>('.grid')!;
-      grid.scrollLeft = 0;
       const first = grid.querySelector<HTMLElement>('.tile')!;
       first.classList.add('selected');
-      const gridBox = grid.getBoundingClientRect();
-      const tileBox = first.getBoundingClientRect();
-      return {
-        gridLeft: gridBox.left,
-        tileLeft: tileBox.left,
-        marginToLeftEdge: tileBox.left - gridBox.left,
-      };
+      const gb = grid.getBoundingClientRect();
+      const tb = first.getBoundingClientRect();
+      return { gridLeft: gb.left, tileLeft: tb.left };
     });
-    // Selected tile scales by ~2%, so it grows ~1.3px on each side at 130px
-    // wide. We just need any positive buffer, since 0 would mean it's flush
-    // and would clip; require >= 2px for safety.
-    expect(result.marginToLeftEdge).toBeGreaterThanOrEqual(2);
+    // No horizontal scroll on mobile any more, so the first tile's left
+    // edge should land at or after the grid's left edge.
+    expect(result.tileLeft).toBeGreaterThanOrEqual(result.gridLeft);
   });
 
-  test('grid is horizontally centered on initial load', async ({ page }) => {
-    const { scrollLeft, scrollWidth, clientWidth } = await page.evaluate(() => {
-      const g = document.querySelector<HTMLElement>('.grid')!;
-      return {
-        scrollLeft: g.scrollLeft,
-        scrollWidth: g.scrollWidth,
-        clientWidth: g.clientWidth,
-      };
+  test('grid uses 2 columns on a narrow phone', async ({ page }) => {
+    const cols = await page.evaluate(() => {
+      const grid = document.querySelector<HTMLElement>('.grid')!;
+      return getComputedStyle(grid).gridTemplateColumns.split(/\s+/).length;
     });
-    const expectedCenter = (scrollWidth - clientWidth) / 2;
-    expect(Math.abs(scrollLeft - expectedCenter)).toBeLessThanOrEqual(1);
+    expect(cols).toBe(2);
   });
 
   test('day picker chips are reachable (not clipped)', async ({ page }) => {
@@ -144,6 +136,8 @@ test.describe('Mobile (Pixel 5) layout', () => {
     }
     await expect(page.getByTestId('submit-btn')).toContainText('SUBMIT 4/4');
     await page.getByTestId('submit-btn').tap();
-    await expect(page.getByTestId('solved-row-0')).toBeVisible();
+    // SolvedList banners are hidden on mobile in favor of the SolvedBar
+    // squircles — verify the new mobile chrome surface instead.
+    await expect(page.getByTestId('solved-squircle-0')).toBeVisible();
   });
 });

@@ -8,6 +8,9 @@ interface DayStatusPillProps {
   todayDay: number;
   open: boolean;
   onClick: () => void;
+  /** Drops the subline; for the landscape top-strip where vertical space
+   *  is tight. */
+  compact?: boolean;
 }
 
 function buildText(s: DayState, todayDay: number): { primary: string; subline: string } {
@@ -68,7 +71,7 @@ function dotClass(s: DayState): string {
 }
 
 export const DayStatusPill = forwardRef<HTMLButtonElement, DayStatusPillProps>(function DayStatusPill(
-  { selected, todayDay, open, onClick },
+  { selected, todayDay, open, onClick, compact = false },
   ref,
 ) {
   const { primary, subline } = buildText(selected, todayDay);
@@ -76,7 +79,7 @@ export const DayStatusPill = forwardRef<HTMLButtonElement, DayStatusPillProps>(f
     <button
       ref={ref}
       type="button"
-      className="day-pill"
+      className={`day-pill${compact ? ' day-pill--compact' : ''}`}
       onClick={onClick}
       aria-haspopup="dialog"
       aria-expanded={open}
@@ -89,7 +92,7 @@ export const DayStatusPill = forwardRef<HTMLButtonElement, DayStatusPillProps>(f
       />
       <span className="day-pill-text">
         <span className="day-pill-primary">{primary}</span>
-        <span className="day-pill-subline">{subline}</span>
+        {!compact && <span className="day-pill-subline">{subline}</span>}
       </span>
       <span className="day-pill-counter">
         <span data-testid="day-selector-pill-day">Day {selected.day}</span>
