@@ -11,6 +11,9 @@ interface TileProps {
   note: string;
   progress: number;
   disabled: boolean;
+  /** Intro/demo mode: render every visual state but reject pointer + keyboard
+   *  input. Differs from `disabled`, which dims the controls. */
+  displayOnly?: boolean;
   onPlay: () => void;
   onSelect: () => void;
   onNoteChange: (val: string) => void;
@@ -26,6 +29,7 @@ export function Tile({
   note,
   progress,
   disabled,
+  displayOnly = false,
   onPlay,
   onSelect,
   onNoteChange,
@@ -37,6 +41,7 @@ export function Tile({
     exiting && 'exiting',
     matched && 'matched',
     matched && `matched-theme-${track.themeIdx}`,
+    displayOnly && 'display-only',
   ]
     .filter(Boolean)
     .join(' ');
@@ -44,7 +49,12 @@ export function Tile({
   const progressPct = Math.min(100, progress * 100);
 
   return (
-    <div className={tileClass} data-track-id={track.id} data-testid={`tile-${track.id}`}>
+    <div
+      className={tileClass}
+      data-track-id={track.id}
+      data-testid={displayOnly ? undefined : `tile-${track.id}`}
+      aria-hidden={displayOnly || undefined}
+    >
       <span className="tile-screw tl" />
       <span className="tile-screw tr" />
       <span className="tile-screw bl" />
@@ -57,7 +67,9 @@ export function Tile({
           placeholder="write title…"
           rows={2}
           value={note}
-          onChange={(e) => onNoteChange(e.target.value)}
+          readOnly={displayOnly}
+          tabIndex={displayOnly ? -1 : undefined}
+          onChange={displayOnly ? undefined : (e) => onNoteChange(e.target.value)}
           onKeyDown={(e) => {
             // Enter inserts a newline (multi-line notes like "Song\nArtist");
             // focus changes only on click/touch. Escape commits/blurs.
@@ -81,10 +93,11 @@ export function Tile({
         <button
           type="button"
           className={`play-btn${playing ? ' playing' : ''}`}
-          onClick={onPlay}
+          onClick={displayOnly ? undefined : onPlay}
           disabled={disabled}
+          tabIndex={displayOnly ? -1 : undefined}
           aria-label={playing ? 'Pause' : 'Play'}
-          data-testid={`play-${track.id}`}
+          data-testid={displayOnly ? undefined : `play-${track.id}`}
         >
           <span className="icon" />
           <span>{playing ? 'STOP' : 'PLAY'}</span>
@@ -92,9 +105,10 @@ export function Tile({
         <button
           type="button"
           className="select-btn"
-          onClick={onSelect}
+          onClick={displayOnly ? undefined : onSelect}
           disabled={disabled}
-          data-testid={`select-${track.id}`}
+          tabIndex={displayOnly ? -1 : undefined}
+          data-testid={displayOnly ? undefined : `select-${track.id}`}
         >
           CUE
         </button>

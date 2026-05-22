@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { puzzles, MAX_MISTAKES, isReleased, latestReleasedIndex } from './puzzles';
-import { loadCurrentDay, saveCurrentDay } from './storage';
+import { loadCurrentDay, saveCurrentDay, loadIntroSeenVersion, saveIntroSeenVersion } from './storage';
 import { deriveDayState, deriveDayStates } from './dayState';
 import { formatPuzzleDate } from './format';
 import { useAudio } from './hooks/useAudio';
@@ -18,6 +18,7 @@ import { CueTray } from './components/CueTray';
 import { MobileActionRow } from './components/MobileActionRow';
 import { EndPanel } from './components/EndPanel';
 import { ResetButton } from './components/ResetButton';
+import { IntroOverlay, INTRO_VERSION } from './components/intro/IntroOverlay';
 
 const STATUS_TIMEOUT_MS = 10000;
 
@@ -54,6 +55,24 @@ export function App() {
   });
 
   const [statusMsg, setStatusMsg] = useState('');
+  // Intro carousel is versioned: a returning visitor sees it again whenever
+  // INTRO_VERSION outpaces the version they last dismissed. Initialized from
+  // storage so a returning visitor never sees a flash of the overlay.
+  // `?showintro=1` forces it open regardless of the saved version — handy
+  // for design review without having to clear localStorage.
+  // `?mock=1` (Playwright) skips the overlay entirely so existing specs
+  // don't need to dismiss it before reaching the grid.
+  const [showIntro, setShowIntro] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('mock')) return false;
+    if (params.get('showintro') === '1') return true;
+    return loadIntroSeenVersion() < INTRO_VERSION;
+  });
+  const dismissIntro = useCallback(() => {
+    saveIntroSeenVersion(INTRO_VERSION);
+    setShowIntro(false);
+  }, []);
   /** Days unlocked at runtime — by Konami (all of them) or by the countdown
    *  ticking past a `releaseAt` (one at a time). Either case adds the day
    *  to this set; nobody reaches into module-level puzzle data anymore. */
@@ -167,6 +186,8 @@ export function App() {
   );
 
   return (
+    <>
+      {showIntro && <IntroOverlay onDismiss={dismissIntro} />}
     <div
       className="app-shell"
       data-orientation={orientation}
@@ -366,5 +387,6 @@ export function App() {
         )}
       </footer>
     </div>
+    </>
   );
 }

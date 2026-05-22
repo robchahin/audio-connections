@@ -2312,3 +2312,377 @@ h1 {
 }
 
 
+/* ==========================================================================
+   INTRO CAROUSEL — one-time overlay shown on first visit. Reuses the real
+   Tile component in displayOnly mode so it tracks the live design.
+   ========================================================================== */
+.intro-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: var(--bg-room);
+  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+  padding: 28px 24px 24px;
+  overflow: hidden;
+  animation: introFadeIn 280ms ease both;
+}
+@keyframes introFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.intro-overlay::before {
+  /* warm accent wash behind the cards — echoes the brass theme without
+     fighting the dark chassis the app proper sits on. */
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120% 80% at 50% 30%,
+    rgba(200, 161, 74, 0.10), transparent 60%);
+  pointer-events: none;
+}
+
+.intro-skip {
+  position: absolute;
+  top: max(14px, env(safe-area-inset-top));
+  right: max(18px, env(safe-area-inset-right));
+  z-index: 2;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  padding: 6px 8px;
+}
+.intro-skip:hover { color: var(--text-secondary); }
+
+.intro-stage {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  animation: introSlideX 350ms ease;
+}
+@keyframes introSlideX {
+  from { opacity: 0; transform: translateX(12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.intro-card {
+  width: 100%;
+  max-width: 920px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  position: relative;
+  z-index: 1;
+}
+.intro-card--title {
+  align-items: center;
+  text-align: center;
+  justify-content: center;
+}
+
+/* Title type — matches the real heading family. */
+.intro-title {
+  font-family: var(--font-display);
+  font-size: clamp(40px, 9vw, 72px);
+  letter-spacing: 0.04em;
+  line-height: 0.95;
+  color: var(--text-primary);
+  margin: 24px 0 0;
+  font-weight: 800;
+}
+.intro-title--rules {
+  font-size: clamp(28px, 6vw, 56px);
+  margin: 6px 0 12px;
+  text-align: left;
+  line-height: 1;
+}
+
+.intro-byline {
+  font-family: var(--font-body);
+  font-size: clamp(13px, 1.4vw, 15px);
+  color: var(--text-secondary);
+  line-height: 1.45;
+  margin: 12px 0 0;
+  max-width: 540px;
+}
+.intro-byline em {
+  color: var(--accent);
+  font-style: normal;
+  font-weight: 700;
+}
+
+.intro-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.intro-eyebrow--sub { margin: 0 0 6px; }
+
+.intro-body {
+  font-family: var(--font-body);
+  font-size: clamp(13px, 1.4vw, 15px);
+  line-height: 1.55;
+  color: var(--text-secondary);
+  margin: 0 0 18px;
+  max-width: 540px;
+}
+
+.intro-inline-cue {
+  display: inline-block;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 1px 6px;
+  border: 1px solid var(--accent);
+  border-radius: 3px;
+  vertical-align: 1px;
+}
+
+/* ── Card 1: fly-in cassette stage ────────────────────────────────────── */
+.intro-tile-stage {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 8px;
+  width: 100%;
+  max-width: 560px;
+}
+.intro-tile-stage--grid { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 360px; }
+.intro-tile-stage--row  { grid-template-columns: repeat(4, minmax(0, 1fr)); max-width: 720px; }
+
+.intro-tile-slot {
+  animation: introFlyIn 0.85s cubic-bezier(.2,.8,.25,1) both;
+}
+@keyframes introFlyIn {
+  0%   { opacity: 0; transform: translate(var(--fx), var(--fy)) rotate(var(--fr)) scale(0.6); }
+  70%  { opacity: 1; }
+  100% { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1); }
+}
+
+/* ── Card 2: demo grid + counter ──────────────────────────────────────── */
+.intro-demo {
+  background: var(--recess);
+  border: 1px solid #050608;
+  border-radius: 10px;
+  padding: 14px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 18px;
+  align-items: center;
+  margin-bottom: 18px;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.55);
+}
+.intro-demo-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  min-width: 0;
+}
+.intro-demo-grid .tile {
+  /* Shrink the cassettes a notch so the 2×2 fits in the demo half. */
+  min-height: 0;
+  transform: scale(1);
+  transform-origin: top left;
+}
+.intro-demo-counter {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+.intro-demo-counter-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+.intro-demo-counter-num {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  white-space: nowrap;
+}
+.intro-demo-counter-big {
+  font-family: var(--font-display);
+  font-size: clamp(40px, 8vw, 72px);
+  color: var(--status-in-progress);
+  line-height: 1;
+  font-weight: 800;
+  transition: transform 220ms var(--ease);
+}
+.intro-demo-counter-of {
+  font-family: var(--font-mono);
+  font-size: clamp(16px, 2vw, 22px);
+  color: var(--text-muted);
+}
+.intro-demo-counter-pips {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+}
+.intro-demo-pip {
+  width: 18px;
+  height: 8px;
+  border-radius: 1px;
+  background: var(--face-low);
+  border: 1px solid var(--face-mid);
+  transition: background var(--ease), border-color var(--ease);
+}
+.intro-demo-pip.lit {
+  background: linear-gradient(180deg, #d2a648 0%, #7d5d1c 100%);
+  border-color: #2a1f08;
+}
+
+.intro-rules-footer {
+  margin-top: auto;
+}
+.intro-submit {
+  display: block;
+  width: 100%;
+  max-width: 540px;
+  cursor: default;
+  transition: box-shadow 350ms, background 350ms;
+}
+.intro-submit:not(.hot) {
+  background: linear-gradient(180deg, #3a3b41 0%, #1c1d22 100%);
+  color: var(--text-muted);
+}
+.intro-submit.hot {
+  box-shadow:
+    0 0 0 2px rgba(200, 161, 74, 0.35),
+    0 0 24px rgba(200, 161, 74, 0.45);
+}
+
+/* ── Card 3: install hints ────────────────────────────────────────────── */
+.intro-install-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+.intro-install-step {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  background: var(--face-low);
+  border: 1px solid var(--face-mid);
+  border-radius: 8px;
+}
+.intro-install-platform {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.intro-install-hint {
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--text-primary);
+}
+.intro-install-arrow {
+  color: var(--accent);
+  font-weight: 700;
+  margin: 0 4px;
+}
+
+/* ── Bottom nav ──────────────────────────────────────────────────────── */
+.intro-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0 0;
+  z-index: 2;
+}
+.intro-dots {
+  display: flex;
+  gap: 6px;
+}
+.intro-dot {
+  width: 6px;
+  height: 6px;
+  padding: 0;
+  border: none;
+  border-radius: 3px;
+  background: var(--face-mid);
+  cursor: pointer;
+  transition: width var(--ease), background var(--ease);
+}
+.intro-dot.active {
+  width: 22px;
+  background: var(--accent);
+}
+
+.intro-next,
+.intro-start {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  padding: 10px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.intro-next {
+  background: transparent;
+  border: 1px solid var(--face-high);
+  color: var(--text-primary);
+}
+.intro-next:hover { border-color: var(--accent); color: var(--accent); }
+.intro-start {
+  background: var(--accent);
+  color: #14110a;
+  border: none;
+  box-shadow: 0 0 0 2px rgba(200, 161, 74, 0.25), 0 6px 14px rgba(200, 161, 74, 0.35);
+}
+.intro-start:hover { filter: brightness(1.05); }
+
+/* displayOnly tiles never pulse on focus or click — kill the pointer feedback
+   on the buttons so the demo doesn't suggest interactivity. */
+.tile.display-only {
+  cursor: default;
+}
+.tile.display-only .play-btn,
+.tile.display-only .select-btn,
+.tile.display-only .tile-label-input {
+  cursor: default;
+}
+.tile.display-only .play-btn:active:not(:disabled),
+.tile.display-only .select-btn:active:not(:disabled) {
+  transform: none;
+}
+
+/* On phones, stack the rules card's demo vertically and shrink the title. */
+@media (max-width: 600px) {
+  .intro-overlay { padding: 22px 16px 16px; }
+  .intro-demo {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .intro-demo-counter {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+  }
+  .intro-demo-counter-pips { margin: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro-overlay,
+  .intro-stage,
+  .intro-tile-slot {
+    animation: none;
+  }
+}
