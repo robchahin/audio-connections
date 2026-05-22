@@ -16,12 +16,12 @@ const puzzle: Puzzle = {
       ],
     },
     {
-      theme: 'Spooky / undead creature in the title',
+      theme: 'Monsters & undead in the title',
       tracks: [
         { id: 1440735264, artist: 'The Cranberries', title: 'Zombie', note: 'about the Troubles' },
         { id: 1842444457, artist: 'Tame Impala', title: 'Dracula' },
         { id: 1216344997, artist: 'Jason Isbell', title: 'If We Were Vampires' },
-        { id: 1443821690, artist: 'Andrew Gold', title: 'Spooky, Scary Skeletons' },
+        { id: 1443160570, artist: 'Kanye West', title: 'Monster' },
       ],
     },
     {
