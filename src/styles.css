@@ -2382,8 +2382,14 @@ h1 {
 }
 .intro-card--title {
   align-items: center;
-  text-align: center;
   justify-content: center;
+}
+/* Center title + byline as text, not the whole card — `text-align: center`
+   on the wrapper would cascade into the .tile-track-no inside each cassette
+   and shift the "C-90 · TYPE II" stamp away from the paper label's edge. */
+.intro-card--title .intro-title,
+.intro-card--title .intro-byline {
+  text-align: center;
 }
 
 /* Title type — matches the real heading family. */
