@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useIsMobile } from '../../hooks/useOrientation';
+import { useIsMobile, useOrientation } from '../../hooks/useOrientation';
 import { IntroCard1 } from './IntroCard1';
 import { IntroCard2 } from './IntroCard2';
 import { IntroCard3 } from './IntroCard3';
@@ -40,7 +40,13 @@ const SWIPE_THRESHOLD_PX = 40;
 
 export function IntroOverlay({ onDismiss }: IntroOverlayProps) {
   const isMobile = useIsMobile();
-  const variant: 'mobile' | 'desktop' = isMobile ? 'mobile' : 'desktop';
+  const orientation = useOrientation();
+  // Layout variant tracks viewport shape, not device class. A landscape phone
+  // (wide, short) fits the desktop layout — row of 4 tiles, single-line title
+  // — far better than the portrait 2×2 + stacked title. The card list still
+  // gates on isMobile so phone users in either orientation get the PWA card.
+  const variant: 'mobile' | 'desktop' =
+    isMobile && orientation === 'portrait' ? 'mobile' : 'desktop';
   const cards = isMobile ? MOBILE_CARDS : DESKTOP_CARDS;
 
   const [i, setI] = useState(0);

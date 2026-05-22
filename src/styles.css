@@ -2692,3 +2692,51 @@ h1 {
     animation: none;
   }
 }
+
+/* ── Short viewports (landscape phones, ≤ 500px tall) ──────────────────
+   The portrait layout assumes a tall canvas; on a 390-tall landscape phone
+   the title alone eats the screen. Compact paddings + cap title sizes so the
+   stage stays inside the viewport, and let .intro-stage scroll as a last
+   resort if a card still doesn't fit (better than clipping the dismiss
+   button). */
+@media (max-height: 500px) {
+  .intro-overlay { padding: 14px 20px 12px; }
+  .intro-stage { overflow-y: auto; align-items: flex-start; }
+
+  .intro-title { font-size: clamp(28px, 5vw, 40px); margin-top: 12px; }
+  .intro-title--rules { font-size: clamp(22px, 4vw, 32px); margin: 4px 0 8px; }
+  .intro-byline { font-size: 12px; margin-top: 8px; }
+  .intro-body { font-size: 13px; margin-bottom: 10px; }
+  .intro-eyebrow { margin-bottom: 4px; }
+
+  .intro-tile-stage { margin-bottom: 0; }
+  .intro-tile-stage--row { max-width: 640px; }
+  .intro-tile-stage--row .tile { min-height: 0; }
+
+  .intro-demo {
+    padding: 8px 10px;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+  .intro-demo-grid { gap: 6px; }
+  .intro-demo-grid .tile { min-height: 0; }
+  .intro-demo-counter-big { font-size: clamp(32px, 6vw, 52px); }
+
+  .intro-rules-footer { margin-top: 8px; }
+  .intro-submit { height: 38px; padding: 0 14px; }
+
+  /* Rules card: the demo can't shrink below ~360px (cassette intrinsic
+     height × 2 rows), which exceeds a 314px landscape stage. Rather than
+     fake-fit by clipping, lean on the .intro-stage's overflow-y: auto so
+     the SUBMIT footer stays reachable. Card 1 fits naturally; this only
+     bites Card 2. */
+  .intro-card--rules > .intro-demo {
+    flex: 0 0 auto;
+  }
+
+  .intro-install-steps { gap: 6px; }
+  .intro-install-step { padding: 6px 10px; }
+
+  .intro-skip { top: 8px; right: 12px; }
+  .intro-nav { padding-top: 8px; }
+}
