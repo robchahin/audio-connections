@@ -57,4 +57,19 @@ export async function fetchPreviewUrl(itunesId: number, attempt = 1): Promise<st
   }
 }
 
+/** Fetch the .m4a preview into a Blob and return a blob: URL the caller
+ *  can hand to an <audio> element. Returns null on any failure so the
+ *  caller can gracefully fall back to streaming on play. */
+export async function fetchPreviewBlobUrl(previewUrl: string): Promise<string | null> {
+  try {
+    const r = await fetch(previewUrl);
+    if (!r.ok) return null;
+    const blob = await r.blob();
+    return URL.createObjectURL(blob);
+  } catch (e) {
+    console.warn('Preview blob fetch failed:', e);
+    return null;
+  }
+}
+
 export { sleep };

@@ -23,6 +23,9 @@ export interface LoadedTrack {
   id: number;
   themeIdx: number;
   previewUrl: string;
+  /** Blob: URL of the prefetched .m4a. Absent when the prefetch failed or
+   *  in mock mode — playback falls back to `previewUrl` (streaming) then. */
+  blobUrl?: string;
   artist: string;
   title: string;
   note?: string;

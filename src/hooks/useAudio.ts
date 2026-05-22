@@ -15,18 +15,37 @@ export interface UseAudio {
 }
 
 /** Manages a single HTMLAudioElement and the visible playback state for a
- *  Tile/Grid. Extracted from App so the gameplay logic and the audio
- *  lifecycle can be reviewed (and broken) independently. */
+ *  Tile/Grid. One element is reused across plays — recreating per-press was
+ *  causing the cubeb-aaudio sink-recreate race on Firefox Android
+ *  (NS_ERROR_DOM_MEDIA_MEDIASINK_ERR), and fresh elements bypass any
+ *  cached `blobUrl` on the track. */
 export function useAudio(tracks: LoadedTrack[]): UseAudio {
   const [playingId, setPlayingId] = useState<number | null>(null);
   const [playProgress, setPlayProgress] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const loadedSrcRef = useRef<string | null>(null);
+
+  const ensureAudio = useCallback((): HTMLAudioElement => {
+    let audio = audioRef.current;
+    if (audio) return audio;
+    audio = new Audio();
+    audio.addEventListener('ended', () => {
+      setPlayingId(null);
+      setPlayProgress(0);
+    });
+    audio.addEventListener('timeupdate', () => {
+      const a = audioRef.current;
+      if (!a) return;
+      const dur = a.duration || 30;
+      setPlayProgress(a.currentTime / dur);
+    });
+    audioRef.current = audio;
+    return audio;
+  }, []);
 
   const stopAudio = useCallback(() => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
+    const audio = audioRef.current;
+    if (audio) audio.pause();
     setPlayingId(null);
     setPlayProgress(0);
   }, []);
@@ -36,42 +55,42 @@ export function useAudio(tracks: LoadedTrack[]): UseAudio {
       const track = tracks.find((t) => t.id === id);
       if (!track) return;
 
-      const audio = audioRef.current;
-      const isThisPlaying =
-        audio !== null && playingId === id && !audio.paused && !audio.ended;
+      const audio = ensureAudio();
+      const isThisPlaying = playingId === id && !audio.paused && !audio.ended;
+      if (isThisPlaying) {
+        stopAudio();
+        return;
+      }
 
-      stopAudio();
-      if (isThisPlaying) return;
-
-      const next = new Audio(track.previewUrl);
-      audioRef.current = next;
+      const src = track.blobUrl ?? track.previewUrl;
+      if (loadedSrcRef.current !== src) {
+        audio.src = src;
+        loadedSrcRef.current = src;
+      } else {
+        // Replaying the same track: rewind. Safe before metadata loads —
+        // the seek queues until the source is ready.
+        audio.currentTime = 0;
+      }
       setPlayingId(id);
       setPlayProgress(0);
 
-      next.addEventListener('ended', () => {
-        if (audioRef.current === next) {
-          stopAudio();
-        }
-      });
-      next.addEventListener('timeupdate', () => {
-        if (audioRef.current !== next) return;
-        const dur = next.duration || 30;
-        setPlayProgress(next.currentTime / dur);
-      });
-      next.play().catch((err) => {
+      audio.play().catch((err: unknown) => {
+        // AbortError fires when a rapid retoggle supersedes this play —
+        // benign, the next play's state is already correct.
+        if (err instanceof DOMException && err.name === 'AbortError') return;
         console.warn('Audio play failed:', err);
-        if (audioRef.current === next) {
-          stopAudio();
-        }
+        setPlayingId((cur) => (cur === id ? null : cur));
+        setPlayProgress((cur) => (cur === 0 ? cur : 0));
       });
     },
-    [tracks, playingId, stopAudio],
+    [tracks, playingId, ensureAudio, stopAudio],
   );
 
   useEffect(() => {
     return () => {
       if (audioRef.current) audioRef.current.pause();
       audioRef.current = null;
+      loadedSrcRef.current = null;
     };
   }, []);
 

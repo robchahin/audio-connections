@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
 import type { LoadedTrack, Guess, Puzzle } from '../types';
 import { MAX_MISTAKES } from '../puzzles';
-import { fetchPreviewUrl, sleep } from '../itunes';
+import { fetchPreviewUrl, fetchPreviewBlobUrl, sleep } from '../itunes';
 import { loadState, saveState, clearState } from '../storage';
 import type { PersistedGameState } from '../storage';
 import { EXIT_ANIM_MS, MATCH_PULSE_MS } from '../timings';
@@ -287,6 +287,11 @@ export function usePuzzleSession(puzzle: Puzzle, options: UsePuzzleSessionOption
   );
 
   const loadGenRef = useRef(0);
+  /* Blob URLs currently held by `state.tracks`. Revoked when the next load
+   *  commits or on unmount, so a day-switch's ~16MB of cached audio doesn't
+   *  leak. Stale-gen blobs (created by a superseded load) are revoked
+   *  inline in the load effect below. */
+  const activeBlobUrlsRef = useRef<string[]>([]);
 
   /* ── Load tracks (iTunes lookups) + restore persisted state for this day ── */
   useEffect(() => {
@@ -318,6 +323,32 @@ export function usePuzzleSession(puzzle: Puzzle, options: UsePuzzleSessionOption
       }
       if (myGen !== loadGenRef.current) return;
 
+      /* Phase 2: prefetch the .m4a bytes in parallel so playback is a local
+       *  blob: read (no CDN hit, network-drop resilient, no MediaSink
+       *  recreate-race on Android Firefox). Each blob is ~1MB → ~16MB total
+       *  per day; revoked on day switch by activeBlobUrlsRef below. */
+      let cachedCount = 0;
+      const total = previewUrls.filter((u): u is string => u !== null).length;
+      const blobUrls = await Promise.all(
+        previewUrls.map(async (url) => {
+          if (!url || mock) return null;
+          const blobUrl = await fetchPreviewBlobUrl(url);
+          if (blobUrl && myGen === loadGenRef.current) {
+            cachedCount += 1;
+            dispatch({
+              type: 'load-status',
+              status: `Caching audio… (${cachedCount}/${total})`,
+            });
+          }
+          return blobUrl;
+        }),
+      );
+
+      if (myGen !== loadGenRef.current) {
+        for (const u of blobUrls) if (u) URL.revokeObjectURL(u);
+        return;
+      }
+
       const loaded: LoadedTrack[] = all
         .map((x, i): LoadedTrack | null => {
           const url = previewUrls[i];
@@ -329,10 +360,18 @@ export function usePuzzleSession(puzzle: Puzzle, options: UsePuzzleSessionOption
             artist: x.artist,
             title: x.title,
           };
+          const blobUrl = blobUrls[i];
+          if (blobUrl) t.blobUrl = blobUrl;
           if (x.note !== undefined) t.note = x.note;
           return t;
         })
         .filter((t): t is LoadedTrack => t !== null);
+
+      // Commit: revoke the previous day's blobs, install ours.
+      for (const u of activeBlobUrlsRef.current) URL.revokeObjectURL(u);
+      activeBlobUrlsRef.current = loaded
+        .map((t) => t.blobUrl)
+        .filter((u): u is string => !!u);
 
       const loadStatus =
         loaded.length < all.length
@@ -369,6 +408,14 @@ export function usePuzzleSession(puzzle: Puzzle, options: UsePuzzleSessionOption
       loadGenRef.current++;
     };
   }, [puzzle.themes, puzzle.day]);
+
+  /* ── Revoke any still-active blob: URLs on unmount ── */
+  useEffect(() => {
+    return () => {
+      for (const u of activeBlobUrlsRef.current) URL.revokeObjectURL(u);
+      activeBlobUrlsRef.current = [];
+    };
+  }, []);
 
   /* ── Persist game state on every change ──
         Save under state.day, not puzzle.day. The two diverge briefly during
