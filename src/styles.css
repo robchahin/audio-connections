@@ -612,21 +612,18 @@ h1 {
    .tile-label-stack overlaps two layers in the tile's first grid row:
      1. .tile-reveal     — answer card (artist + title) on top of the deck
      2. .tile-label      — the paper label; clip-path lifts its top-right
-                           corner toward the bottom-left as --peel grows.
+                           corner toward the bottom-left.
    .tile-label__flap is a child of .tile-label that paints the back of
    the lifted corner. Peel progresses in two overlapping phases:
      phase 1 — clip-path sweeps the fold along the diagonal to the
-               opposite corner (label half-consumed at --peel: 100%)
+               opposite corner (label half-consumed at .peeled)
      phase 2 — the remaining half-label transforms and fades off the
-               tile, leaving the reveal card fully exposed. */
-@property --peel {
-  syntax: '<percentage>';
-  initial-value: 0%;
-  inherits: true;
-}
-.tile { --peel: 0%; }
-.tile.peel-armed { --peel: 20%; }
-.tile.peeled { --peel: 100%; }
+               tile, leaving the reveal card fully exposed.
+   The clip-path polygon is set explicitly per state (idle / armed /
+   peeled) rather than driven through a calc()-on-custom-property. The
+   var-driven version is more elegant but WebKit's optimizer doesn't
+   composite that path — repaints stutter on iOS. Direct polygon
+   interpolation is the battle-tested path. */
 
 .tile-label-stack {
   position: relative;
@@ -674,23 +671,23 @@ h1 {
 
 .tile-label-stack > .tile-label {
   z-index: 2;
-  clip-path: polygon(
-    0 0,
-    calc(100% - var(--peel)) 0,
-    100% var(--peel),
-    100% 100%,
-    0 100%
-  );
+  /* idle: degenerate pentagon = full rectangle */
+  clip-path: polygon(0 0, 100% 0, 100% 0, 100% 100%, 0 100%);
   transform: translate(0, 0) rotate(0);
   transform-origin: 100% 100%;
   opacity: 1;
   transition:
-    --peel 0.34s cubic-bezier(0.45, 0, 0.2, 1),
+    clip-path 0.34s cubic-bezier(0.45, 0, 0.2, 1),
     transform 0.32s cubic-bezier(0.45, 0, 0.55, 1) 0.22s,
     opacity 0.22s linear 0.30s;
 }
+.tile.peel-armed .tile-label-stack > .tile-label {
+  /* armed: 20% corner cut */
+  clip-path: polygon(0 0, 80% 0, 100% 20%, 100% 100%, 0 100%);
+}
 .tile.peeled .tile-label-stack > .tile-label {
-  /* phase 2: half-peeled label slips off the bottom-left of the tile */
+  /* peeled: diagonal half-cut + phase-2 slip off the bottom-left */
+  clip-path: polygon(0 0, 0 0, 100% 100%, 100% 100%, 0 100%);
   transform: translate(-22%, 28%) rotate(-12deg);
   opacity: 0;
 }
@@ -712,11 +709,15 @@ h1 {
       rgba(0, 0, 0, 0.04) 36%,
       rgba(0, 0, 0, 0) 65%),
     linear-gradient(135deg, var(--paper-warm) 0%, var(--paper-shadow) 100%);
-  clip-path: polygon(
-    calc(100% - var(--peel)) 0,
-    100% var(--peel),
-    calc(100% - var(--peel)) var(--peel)
-  );
+  /* idle: degenerate triangle = invisible */
+  clip-path: polygon(100% 0, 100% 0, 100% 0);
+  transition: clip-path 0.34s cubic-bezier(0.45, 0, 0.2, 1);
+}
+.tile.peel-armed .tile-label__flap {
+  clip-path: polygon(80% 0, 100% 20%, 80% 20%);
+}
+.tile.peeled .tile-label__flap {
+  clip-path: polygon(0 0, 100% 100%, 0 100%);
 }
 
 /* Invisible hit-area over the dog-ear. The dog-ear (rendered by
