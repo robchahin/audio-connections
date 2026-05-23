@@ -1,5 +1,9 @@
+import { useEffect, useState } from 'react';
 import type { LoadedTrack } from '../types';
 import { CassetteDeck } from './CassetteDeck';
+
+type PeelState = 'idle' | 'armed' | 'revealed';
+const ARM_TIMEOUT_MS = 5000;
 
 interface TileProps {
   track: LoadedTrack;
@@ -34,6 +38,22 @@ export function Tile({
   onSelect,
   onNoteChange,
 }: TileProps) {
+  // Prototype: local peel state. First click arms (corner lifted ~10%),
+  // second click within ARM_TIMEOUT_MS reveals; otherwise the corner
+  // settles back to idle.
+  const [peelState, setPeelState] = useState<PeelState>('idle');
+  useEffect(() => {
+    if (peelState !== 'armed') return;
+    const t = setTimeout(() => setPeelState('idle'), ARM_TIMEOUT_MS);
+    return () => clearTimeout(t);
+  }, [peelState]);
+
+  const onPeelClick = () => {
+    setPeelState((s) => (s === 'idle' ? 'armed' : s === 'armed' ? 'revealed' : s));
+  };
+
+  const peeled = peelState === 'revealed';
+
   const tileClass = [
     'tile',
     selected && 'selected',
@@ -42,6 +62,8 @@ export function Tile({
     matched && 'matched',
     matched && `matched-theme-${track.themeIdx}`,
     displayOnly && 'display-only',
+    peelState === 'armed' && 'peel-armed',
+    peeled && 'peeled',
   ]
     .filter(Boolean)
     .join(' ');
@@ -60,31 +82,52 @@ export function Tile({
       <span className="tile-screw bl" />
       <span className="tile-screw br" />
 
-      <div className="tile-label">
-        <div className="tile-track-no">C-90 · TYPE II</div>
-        <textarea
-          className="tile-label-input"
-          placeholder="write title…"
-          rows={2}
-          value={note}
-          readOnly={displayOnly}
-          tabIndex={displayOnly ? -1 : undefined}
-          onChange={displayOnly ? undefined : (e) => onNoteChange(e.target.value)}
-          onKeyDown={(e) => {
-            // Enter inserts a newline (multi-line notes like "Song\nArtist");
-            // focus changes only on click/touch. Escape commits/blurs.
-            if (e.key === 'Escape') {
-              e.preventDefault();
-              (e.target as HTMLTextAreaElement).blur();
+      <div className="tile-label-stack">
+        <div className="tile-reveal" aria-hidden={!peeled}>
+          <div className="tile-reveal-artist">{track.artist}</div>
+          <div className="tile-reveal-title">{track.title}</div>
+        </div>
+
+        <div className="tile-label">
+          <div className="tile-track-no">C-90 · TYPE II</div>
+          <textarea
+            className="tile-label-input"
+            placeholder="write title…"
+            rows={2}
+            value={note}
+            readOnly={displayOnly || peeled}
+            tabIndex={displayOnly ? -1 : undefined}
+            onChange={displayOnly ? undefined : (e) => onNoteChange(e.target.value)}
+            onKeyDown={(e) => {
+              // Enter inserts a newline (multi-line notes like "Song\nArtist");
+              // focus changes only on click/touch. Escape commits/blurs.
+              if (e.key === 'Escape') {
+                e.preventDefault();
+                (e.target as HTMLTextAreaElement).blur();
+              }
+            }}
+            onBlur={(e) => {
+              // Once not editing, show the note from the top so a long title
+              // reads from its start rather than scrolled to the caret.
+              e.target.scrollTop = 0;
+            }}
+            aria-label={`Note for track ${index + 1}`}
+          />
+          <div className="tile-label__flap" aria-hidden="true" />
+        </div>
+
+        {!displayOnly && !peeled && (
+          <button
+            type="button"
+            className="tile-label__peel-trigger"
+            onClick={onPeelClick}
+            aria-label={
+              peelState === 'armed'
+                ? 'Click again to reveal the answer'
+                : 'Peel the label to reveal the answer'
             }
-          }}
-          onBlur={(e) => {
-            // Once not editing, show the note from the top so a long title
-            // reads from its start rather than scrolled to the caret.
-            e.target.scrollTop = 0;
-          }}
-          aria-label={`Note for track ${index + 1}`}
-        />
+          />
+        )}
       </div>
 
       <CassetteDeck playing={playing} progress={progress} />

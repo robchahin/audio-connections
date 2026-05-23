@@ -145,7 +145,8 @@ body {
   .bay { padding: 10px 8px; }
   .grid { gap: 8px; }
   .tile { min-height: 168px; }
-  .tile-label { margin: 7px 7px 0; padding: 6px 8px 7px; }
+  .tile-label-stack { margin: 7px 7px 0; }
+  .tile-label { padding: 6px 8px 7px; }
   .tile-screw.bl, .tile-screw.br { display: none; }
   .tile-track-no { font-size: 7px; letter-spacing: 0.16em; }
   .subtitle { font-size: 12px; margin: 12px 4px 16px; }
@@ -498,7 +499,6 @@ h1 {
 /* ── Paper label — the dominant top zone of the cartridge ────────────── */
 .tile-label {
   position: relative;
-  margin: 8px 8px 0;
   padding: 7px 9px 8px;
   /* Ruled lines via SVG rather than repeating-linear-gradient. Firefox
      Android renders 1px-pitch repeating gradients with unreliable sub-
@@ -607,6 +607,160 @@ h1 {
     inset 0 0 0 1.5px var(--accent),
     inset 0 -8px 12px rgba(184, 169, 115, 0.18);
 }
+
+/* ── Label peel / reveal (prototype) ─────────────────────────────────
+   .tile-label-stack overlaps two layers in the tile's first grid row:
+     1. .tile-reveal     — answer card (artist + title) on top of the deck
+     2. .tile-label      — the paper label; clip-path lifts its top-right
+                           corner toward the bottom-left as --peel grows.
+   .tile-label__flap is a child of .tile-label that paints the back of
+   the lifted corner. Peel progresses in two overlapping phases:
+     phase 1 — clip-path sweeps the fold along the diagonal to the
+               opposite corner (label half-consumed at --peel: 100%)
+     phase 2 — the remaining half-label transforms and fades off the
+               tile, leaving the reveal card fully exposed. */
+@property --peel {
+  syntax: '<percentage>';
+  initial-value: 0%;
+  inherits: true;
+}
+.tile { --peel: 0%; }
+.tile.peel-armed { --peel: 20%; }
+.tile.peeled { --peel: 100%; }
+
+.tile-label-stack {
+  position: relative;
+  margin: 8px 8px 0;
+  display: grid;
+  grid-template-areas: 'stack';
+  min-height: 0;
+}
+.tile-label-stack > .tile-reveal,
+.tile-label-stack > .tile-label {
+  grid-area: stack;
+  min-width: 0;
+}
+
+.tile-reveal {
+  z-index: 1;
+  padding: 8px 10px 9px;
+  border-radius: 2px;
+  background:
+    linear-gradient(180deg, #1c1d22 0%, #131418 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.55);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  overflow: hidden;
+}
+.tile-reveal-artist {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+}
+.tile-reveal-title {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 1.2;
+  color: rgba(255, 255, 255, 0.92);
+  overflow-wrap: anywhere;
+}
+
+.tile-label-stack > .tile-label {
+  z-index: 2;
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--peel)) 0,
+    100% var(--peel),
+    100% 100%,
+    0 100%
+  );
+  transform: translate(0, 0) rotate(0);
+  transform-origin: 100% 100%;
+  opacity: 1;
+  transition:
+    --peel 0.34s cubic-bezier(0.45, 0, 0.2, 1),
+    transform 0.32s cubic-bezier(0.45, 0, 0.55, 1) 0.22s,
+    opacity 0.22s linear 0.30s;
+}
+.tile.peeled .tile-label-stack > .tile-label {
+  /* phase 2: half-peeled label slips off the bottom-left of the tile */
+  transform: translate(-22%, 28%) rotate(-12deg);
+  opacity: 0;
+}
+.tile.peeled .tile-label::after {
+  /* dog-ear is in the clipped region anyway, but kill it explicitly to
+     avoid an interpolation glitch at the transition midpoint */
+  display: none;
+}
+
+.tile-label__flap {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+  background:
+    linear-gradient(225deg,
+      rgba(0, 0, 0, 0.30) 0%,
+      rgba(0, 0, 0, 0.12) 14%,
+      rgba(0, 0, 0, 0.04) 36%,
+      rgba(0, 0, 0, 0) 65%),
+    linear-gradient(135deg, var(--paper-warm) 0%, var(--paper-shadow) 100%);
+  clip-path: polygon(
+    calc(100% - var(--peel)) 0,
+    100% var(--peel),
+    calc(100% - var(--peel)) var(--peel)
+  );
+}
+
+/* Invisible hit-area over the dog-ear. The dog-ear (rendered by
+   .tile-label::after) is the visual affordance; this button extends the
+   tappable region outward so the corner is reachable on touch without
+   overlapping the textarea. */
+.tile-label__peel-trigger {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 26px;
+  height: 26px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  z-index: 6;
+}
+.tile-label__peel-trigger:focus-visible {
+  outline: 2px solid var(--accent, #4aa3ff);
+  outline-offset: -3px;
+  border-radius: 3px;
+}
+/* Once armed, grow the hit area to a triangle that mirrors the lifted
+   corner (with generous slop). clip-path constrains pointer hits to the
+   triangle, so the textarea on the left half stays clickable for typing. */
+.tile.peel-armed .tile-label__peel-trigger {
+  inset: 0;
+  width: auto;
+  height: auto;
+  clip-path: polygon(55% 0, 100% 0, 100% 55%);
+}
+.tile-label::after {
+  /* re-declared transition (the base rule defines the gradient/position) */
+  transition: opacity 0.18s, transform 0.18s;
+}
+/* Lift / brighten the dog-ear when its hit-area is hovered or focused. */
+.tile-label-stack:has(.tile-label__peel-trigger:hover) .tile-label::after,
+.tile-label-stack:has(.tile-label__peel-trigger:focus-visible) .tile-label::after {
+  opacity: 1;
+  transform: scale(1.25);
+  transform-origin: 100% 0%;
+}
+
 /* ── Transport keys ──────────────────────────────────────────────────── */
 .tile-actions {
   display: grid;
