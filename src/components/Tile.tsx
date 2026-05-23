@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { LoadedTrack } from '../types';
 import { CassetteDeck } from './CassetteDeck';
 
-type PeelState = 'idle' | 'armed' | 'revealed';
+export type PeelState = 'idle' | 'armed' | 'revealed';
 const ARM_TIMEOUT_MS = 5000;
 
 interface TileProps {
@@ -18,6 +18,9 @@ interface TileProps {
   /** Intro/demo mode: render every visual state but reject pointer + keyboard
    *  input. Differs from `disabled`, which dims the controls. */
   displayOnly?: boolean;
+  /** Intro/demo only: drive the peel state from the parent (the click-to-
+   *  arm/confirm flow is internal otherwise). Ignored unless set. */
+  displayPeelState?: PeelState;
   onPlay: () => void;
   onSelect: () => void;
   onNoteChange: (val: string) => void;
@@ -34,22 +37,26 @@ export function Tile({
   progress,
   disabled,
   displayOnly = false,
+  displayPeelState,
   onPlay,
   onSelect,
   onNoteChange,
 }: TileProps) {
-  // Prototype: local peel state. First click arms (corner lifted ~10%),
+  // Prototype: local peel state. First click arms (corner lifted ~20%),
   // second click within ARM_TIMEOUT_MS reveals; otherwise the corner
-  // settles back to idle.
-  const [peelState, setPeelState] = useState<PeelState>('idle');
+  // settles back to idle. `displayPeelState` (intro demo only) overrides.
+  const [internalPeel, setInternalPeel] = useState<PeelState>('idle');
+  const peelState = displayPeelState ?? internalPeel;
+
   useEffect(() => {
-    if (peelState !== 'armed') return;
-    const t = setTimeout(() => setPeelState('idle'), ARM_TIMEOUT_MS);
+    if (displayPeelState !== undefined) return;
+    if (internalPeel !== 'armed') return;
+    const t = setTimeout(() => setInternalPeel('idle'), ARM_TIMEOUT_MS);
     return () => clearTimeout(t);
-  }, [peelState]);
+  }, [internalPeel, displayPeelState]);
 
   const onPeelClick = () => {
-    setPeelState((s) => (s === 'idle' ? 'armed' : s === 'armed' ? 'revealed' : s));
+    setInternalPeel((s) => (s === 'idle' ? 'armed' : s === 'armed' ? 'revealed' : s));
   };
 
   const peeled = peelState === 'revealed';

@@ -3,17 +3,18 @@ import { useIsMobile, useOrientation } from '../../hooks/useOrientation';
 import { IntroCard1 } from './IntroCard1';
 import { IntroCard2 } from './IntroCard2';
 import { IntroCard3 } from './IntroCard3';
+import { IntroCard4 } from './IntroCard4';
 
 /** Bump when intro content changes materially (e.g. new feature card).
  *  App.tsx compares this against the version persisted in localStorage;
  *  returning players whose saved version is lower will see the intro again. */
-export const INTRO_VERSION = 1;
+export const INTRO_VERSION = 2;
 
 interface IntroOverlayProps {
   onDismiss: () => void;
 }
 
-type CardId = 'title' | 'rules' | 'pwa';
+type CardId = 'title' | 'rules' | 'peel' | 'pwa';
 
 interface CardDef {
   id: CardId;
@@ -28,13 +29,17 @@ const RULES_CARD: CardDef = {
   id: 'rules',
   render: (playKey, variant) => <IntroCard2 playKey={playKey} variant={variant} />,
 };
+const PEEL_CARD: CardDef = {
+  id: 'peel',
+  render: (playKey, variant) => <IntroCard4 playKey={playKey} variant={variant} />,
+};
 const PWA_CARD: CardDef = {
   id: 'pwa',
   render: (playKey) => <IntroCard3 playKey={playKey} />,
 };
 
-const MOBILE_CARDS: CardDef[] = [TITLE_CARD, RULES_CARD, PWA_CARD];
-const DESKTOP_CARDS: CardDef[] = [TITLE_CARD, RULES_CARD];
+const MOBILE_CARDS: CardDef[] = [TITLE_CARD, RULES_CARD, PEEL_CARD, PWA_CARD];
+const DESKTOP_CARDS: CardDef[] = [TITLE_CARD, RULES_CARD, PEEL_CARD];
 
 const SWIPE_THRESHOLD_PX = 40;
 

@@ -2725,7 +2725,22 @@ h1 {
     0 0 24px rgba(200, 161, 74, 0.45);
 }
 
-/* ── Card 3: install hints ────────────────────────────────────────────── */
+/* ── Card 3 (peel): single-tile demo ──────────────────────────────────── */
+.intro-demo--peel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Override the grid layout defined by base .intro-demo */
+  grid-template-columns: none;
+}
+.intro-peel-tile {
+  width: clamp(150px, 32vw, 200px);
+}
+.intro-peel-tile .tile {
+  min-height: 184px;
+}
+
+/* ── Card 4: install hints ────────────────────────────────────────────── */
 .intro-install-steps {
   display: flex;
   flex-direction: column;
