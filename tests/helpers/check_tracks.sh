@@ -10,7 +10,7 @@ NC='\033[0m'
 echo "NOTE: spelling and punctuation may cause it to not find the track, skim the curl dump and determine if its good enough"
 cat $FILE | shuf | grep "id:" | while read a; do
     id=$(echo $a| sed -e "s/,.*//" -e "s/.*: //")
-    name=$(echo $a | sed -e "s/.*title: //" -e "s/' },\|\" },//" -e "s/^'\|^\"//")
+    name=$(echo $a | sed -e "s/.*title: //" -e "s/' },\|\" },//" -e "s/^'\|^\"//" -e "s/'. note:.*//" -e "s/\". note:.*//")
 
     echo -n $name"  "
     curl -s https://itunes.apple.com/lookup?id=$id | grep -i "$name" > /dev/null
