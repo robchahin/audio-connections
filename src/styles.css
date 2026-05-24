@@ -1747,9 +1747,16 @@ h1 {
     display: none;
   }
   /* End screen on mobile: show the full song list so play buttons are
-     reachable without hunting through the SolvedBar popovers. */
+     reachable without hunting through the SolvedBar popovers. Hide the
+     SolvedBar in the top and left chrome — the song list duplicates it. */
   .app-shell[data-game-over='true'] .chrome-main .solved {
     display: flex;
+  }
+  .app-shell[data-game-over='true'] .solved-bar {
+    display: none;
+  }
+  .app-shell[data-game-over='true'] .chrome-left {
+    display: none;
   }
 
   /* Mobile chrome ON */
