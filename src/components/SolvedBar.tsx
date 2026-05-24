@@ -89,22 +89,24 @@ export function SolvedBar({
                   {themeTracks.map((t, i) => {
                     const playing = playingId === t.id;
                     return (
-                      <li key={t.id} className="solved-popover-track">
+                      <li key={t.id}>
                         <button
                           type="button"
-                          className={`solved-play-btn${playing ? ' playing' : ''}`}
+                          className={`solved-popover-track${playing ? ' playing' : ''}`}
                           onClick={() => onPlay(t.id)}
                           aria-label={playing ? `Pause ${t.title}` : `Play ${t.title}`}
                           aria-pressed={playing}
                           data-testid={`solved-popover-play-${t.id}`}
                         >
-                          <span className="solved-play-icon" aria-hidden="true" />
+                          <span className="solved-popover-glyph" aria-hidden="true">
+                            {playing ? '▮' : '▸'}
+                          </span>
+                          <span className="solved-popover-no">{String(i + 1).padStart(2, '0')}.</span>
+                          <span className="solved-popover-text">
+                            <span className="solved-popover-title">{t.title}</span>
+                            <span className="solved-popover-artist"> — {t.artist}</span>
+                          </span>
                         </button>
-                        <span className="solved-popover-text">
-                          <span className="solved-popover-no">{String(i + 1).padStart(2, '0')}.</span>{' '}
-                          <span className="solved-popover-title">{t.title}</span>
-                          <span className="solved-popover-artist"> — {t.artist}</span>
-                        </span>
                       </li>
                     );
                   })}

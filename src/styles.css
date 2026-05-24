@@ -994,13 +994,49 @@ h1 {
 .solved-tracks {
   font-family: var(--font-mono);
   font-size: 11.5px;
-  line-height: 1.55;
+  line-height: 1.4;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 .solved-track-item {
   display: grid;
-  grid-template-columns: 22px 24px 1fr;
+  grid-template-columns: 14px 24px 1fr;
   gap: 6px;
-  align-items: center;
+  align-items: baseline;
+  padding: 5px 8px 5px 4px;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 2px;
+  /* Let users still copy the title text from the clickable row. */
+  user-select: text;
+  -webkit-user-select: text;
+  transition: background var(--ease);
+}
+.solved-track-item:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+.solved-track-item:focus-visible {
+  outline: 1px dashed rgba(0, 0, 0, 0.55);
+  outline-offset: -2px;
+}
+.solved-track-item.playing {
+  background: rgba(0, 0, 0, 0.16);
+}
+.solved-track-glyph {
+  color: rgba(0, 0, 0, 0.55);
+  font-size: 12px;
+  line-height: 1;
+  width: 14px;
+  text-align: center;
+}
+.solved-track-item.playing .solved-track-glyph {
+  color: var(--paper-ink);
 }
 .solved-track-no {
   color: rgba(0, 0, 0, 0.55);
@@ -1016,53 +1052,6 @@ h1 {
 .solved-note {
   color: rgba(0, 0, 0, 0.55);
   font-style: italic;
-}
-.solved-play-btn {
-  width: 22px;
-  height: 22px;
-  padding: 0;
-  border-radius: 50%;
-  border: 1px solid rgba(0, 0, 0, 0.55);
-  background: linear-gradient(180deg, #3a3b41 0%, #1c1d22 100%);
-  color: #d4cebd;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.4),
-    0 1px 1px rgba(0, 0, 0, 0.35);
-  transition: transform 80ms ease, background var(--ease);
-}
-.solved-play-btn:active {
-  transform: translateY(1px);
-}
-.solved-play-btn:focus-visible {
-  outline: 2px solid #d4cebd;
-  outline-offset: 2px;
-}
-.solved-play-icon {
-  display: inline-block;
-  width: 0;
-  height: 0;
-  border-left: 7px solid currentColor;
-  border-top: 4px solid transparent;
-  border-bottom: 4px solid transparent;
-  margin-left: 2px;
-}
-.solved-play-btn.playing {
-  background: linear-gradient(180deg, #cf3a30 0%, #761814 100%);
-  color: #fff8e8;
-  border-color: #3a0a08;
-}
-.solved-play-btn.playing .solved-play-icon {
-  border: none;
-  width: 8px;
-  height: 8px;
-  margin-left: 0;
-  background: linear-gradient(90deg,
-    currentColor 0 3px, transparent 3px 5px, currentColor 5px 8px);
 }
 /* ── Mistakes — 4-LED VU-style meter ─────────────────────────────────── */
 .mistakes-row {
@@ -2010,15 +1999,48 @@ h1 {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
 }
 .solved-popover-track {
-  display: flex;
-  align-items: center;
+  display: grid;
+  grid-template-columns: 14px 24px 1fr;
   gap: 6px;
+  align-items: baseline;
+  width: 100%;
+  padding: 6px 6px 6px 2px;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 3px;
+  user-select: text;
+  -webkit-user-select: text;
+  transition: background var(--ease);
+}
+.solved-popover-track:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+.solved-popover-track:focus-visible {
+  outline: 1px dashed rgba(255, 255, 255, 0.4);
+  outline-offset: -2px;
+}
+.solved-popover-track.playing {
+  background: rgba(255, 255, 255, 0.1);
+}
+.solved-popover-glyph {
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1;
+  width: 14px;
+  text-align: center;
+}
+.solved-popover-track.playing .solved-popover-glyph {
+  color: var(--text-primary);
 }
 .solved-popover-text {
-  flex: 1;
   min-width: 0;
 }
 .solved-popover-no {

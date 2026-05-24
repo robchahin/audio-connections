@@ -57,24 +57,25 @@ export function SolvedList({
               {themeTracks.map((t, i) => {
                 const playing = playingId === t.id;
                 return (
-                  <div key={t.id} className="solved-track-item">
-                    <button
-                      type="button"
-                      className={`solved-play-btn${playing ? ' playing' : ''}`}
-                      onClick={() => onPlay(t.id)}
-                      aria-label={playing ? `Pause ${t.title}` : `Play ${t.title}`}
-                      aria-pressed={playing}
-                      data-testid={`solved-play-${t.id}`}
-                    >
-                      <span className="solved-play-icon" aria-hidden="true" />
-                    </button>
+                  <button
+                    key={t.id}
+                    type="button"
+                    className={`solved-track-item${playing ? ' playing' : ''}`}
+                    onClick={() => onPlay(t.id)}
+                    aria-label={playing ? `Pause ${t.title}` : `Play ${t.title}`}
+                    aria-pressed={playing}
+                    data-testid={`solved-play-${t.id}`}
+                  >
+                    <span className="solved-track-glyph" aria-hidden="true">
+                      {playing ? '▮' : '▸'}
+                    </span>
                     <span className="solved-track-no">{String(i + 1).padStart(2, '0')}.</span>
-                    <span>
+                    <span className="solved-track-text">
                       <span className="solved-title">{t.title}</span>
                       <span className="solved-artist"> — {t.artist}</span>
                       {t.note && <span className="solved-note"> ({t.note})</span>}
                     </span>
-                  </div>
+                  </button>
                 );
               })}
             </div>
