@@ -998,8 +998,9 @@ h1 {
 }
 .solved-track-item {
   display: grid;
-  grid-template-columns: 24px 1fr;
+  grid-template-columns: 22px 24px 1fr;
   gap: 6px;
+  align-items: center;
 }
 .solved-track-no {
   color: rgba(0, 0, 0, 0.55);
@@ -1015,6 +1016,53 @@ h1 {
 .solved-note {
   color: rgba(0, 0, 0, 0.55);
   font-style: italic;
+}
+.solved-play-btn {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.55);
+  background: linear-gradient(180deg, #3a3b41 0%, #1c1d22 100%);
+  color: #d4cebd;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.4),
+    0 1px 1px rgba(0, 0, 0, 0.35);
+  transition: transform 80ms ease, background var(--ease);
+}
+.solved-play-btn:active {
+  transform: translateY(1px);
+}
+.solved-play-btn:focus-visible {
+  outline: 2px solid #d4cebd;
+  outline-offset: 2px;
+}
+.solved-play-icon {
+  display: inline-block;
+  width: 0;
+  height: 0;
+  border-left: 7px solid currentColor;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  margin-left: 2px;
+}
+.solved-play-btn.playing {
+  background: linear-gradient(180deg, #cf3a30 0%, #761814 100%);
+  color: #fff8e8;
+  border-color: #3a0a08;
+}
+.solved-play-btn.playing .solved-play-icon {
+  border: none;
+  width: 8px;
+  height: 8px;
+  margin-left: 0;
+  background: linear-gradient(90deg,
+    currentColor 0 3px, transparent 3px 5px, currentColor 5px 8px);
 }
 /* ── Mistakes — 4-LED VU-style meter ─────────────────────────────────── */
 .mistakes-row {
@@ -1698,6 +1746,11 @@ h1 {
   .chrome-main .solved {
     display: none;
   }
+  /* End screen on mobile: show the full song list so play buttons are
+     reachable without hunting through the SolvedBar popovers. */
+  .app-shell[data-game-over='true'] .chrome-main .solved {
+    display: flex;
+  }
 
   /* Mobile chrome ON */
   .chrome-top-mobile {
@@ -1951,6 +2004,15 @@ h1 {
   display: flex;
   flex-direction: column;
   gap: 2px;
+}
+.solved-popover-track {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.solved-popover-text {
+  flex: 1;
+  min-width: 0;
 }
 .solved-popover-no {
   color: var(--text-muted);

@@ -11,6 +11,8 @@ interface SolvedBarProps {
   tracks: LoadedTrack[];
   guessHistory: Guess[];
   orientation: ChromeOrientation;
+  playingId: number | null;
+  onPlay: (id: number) => void;
 }
 
 const SIDES = ['A', 'B', 'C', 'D'];
@@ -18,7 +20,15 @@ const SIDES = ['A', 'B', 'C', 'D'];
 /** Mobile chrome: row (portrait) or column (landscape) of squircles, one
  *  per solved theme. Tapping a squircle opens a popover with the theme's
  *  tracks. Popover opens downward in portrait and rightward in landscape. */
-export function SolvedBar({ themes, solvedThemes, tracks, guessHistory, orientation }: SolvedBarProps) {
+export function SolvedBar({
+  themes,
+  solvedThemes,
+  tracks,
+  guessHistory,
+  orientation,
+  playingId,
+  onPlay,
+}: SolvedBarProps) {
   const [openIdx, setOpenIdx] = useState<number | null>(null);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -76,13 +86,28 @@ export function SolvedBar({ themes, solvedThemes, tracks, guessHistory, orientat
               >
                 <div className="solved-popover-theme">{themes[themeIdx].theme}</div>
                 <ul className="solved-popover-tracks">
-                  {themeTracks.map((t, i) => (
-                    <li key={t.id}>
-                      <span className="solved-popover-no">{String(i + 1).padStart(2, '0')}.</span>{' '}
-                      <span className="solved-popover-title">{t.title}</span>
-                      <span className="solved-popover-artist"> — {t.artist}</span>
-                    </li>
-                  ))}
+                  {themeTracks.map((t, i) => {
+                    const playing = playingId === t.id;
+                    return (
+                      <li key={t.id} className="solved-popover-track">
+                        <button
+                          type="button"
+                          className={`solved-play-btn${playing ? ' playing' : ''}`}
+                          onClick={() => onPlay(t.id)}
+                          aria-label={playing ? `Pause ${t.title}` : `Play ${t.title}`}
+                          aria-pressed={playing}
+                          data-testid={`solved-popover-play-${t.id}`}
+                        >
+                          <span className="solved-play-icon" aria-hidden="true" />
+                        </button>
+                        <span className="solved-popover-text">
+                          <span className="solved-popover-no">{String(i + 1).padStart(2, '0')}.</span>{' '}
+                          <span className="solved-popover-title">{t.title}</span>
+                          <span className="solved-popover-artist"> — {t.artist}</span>
+                        </span>
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             )}

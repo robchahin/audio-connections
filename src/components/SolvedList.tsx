@@ -5,11 +5,20 @@ interface SolvedListProps {
   solvedThemes: Set<number>;
   tracks: LoadedTrack[];
   guessHistory: Guess[];
+  playingId: number | null;
+  onPlay: (id: number) => void;
 }
 
 const SIDES = ['A', 'B', 'C', 'D'];
 
-export function SolvedList({ themes, solvedThemes, tracks, guessHistory }: SolvedListProps) {
+export function SolvedList({
+  themes,
+  solvedThemes,
+  tracks,
+  guessHistory,
+  playingId,
+  onPlay,
+}: SolvedListProps) {
   // Render rows in the order the player actually found the groups.
   // solvedThemes is derived in theme-index order, so reconstruct solve
   // order from the correct guesses (persisted, so it survives reload),
@@ -45,16 +54,29 @@ export function SolvedList({ themes, solvedThemes, tracks, guessHistory }: Solve
               <span>{themes[themeIdx].theme}</span>
             </div>
             <div className="solved-tracks">
-              {themeTracks.map((t, i) => (
-                <div key={t.id} className="solved-track-item">
-                  <span className="solved-track-no">{String(i + 1).padStart(2, '0')}.</span>
-                  <span>
-                    <span className="solved-title">{t.title}</span>
-                    <span className="solved-artist"> — {t.artist}</span>
-                    {t.note && <span className="solved-note"> ({t.note})</span>}
-                  </span>
-                </div>
-              ))}
+              {themeTracks.map((t, i) => {
+                const playing = playingId === t.id;
+                return (
+                  <div key={t.id} className="solved-track-item">
+                    <button
+                      type="button"
+                      className={`solved-play-btn${playing ? ' playing' : ''}`}
+                      onClick={() => onPlay(t.id)}
+                      aria-label={playing ? `Pause ${t.title}` : `Play ${t.title}`}
+                      aria-pressed={playing}
+                      data-testid={`solved-play-${t.id}`}
+                    >
+                      <span className="solved-play-icon" aria-hidden="true" />
+                    </button>
+                    <span className="solved-track-no">{String(i + 1).padStart(2, '0')}.</span>
+                    <span>
+                      <span className="solved-title">{t.title}</span>
+                      <span className="solved-artist"> — {t.artist}</span>
+                      {t.note && <span className="solved-note"> ({t.note})</span>}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         );

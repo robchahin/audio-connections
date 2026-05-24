@@ -181,6 +181,7 @@ export function App() {
       className="app-shell"
       data-orientation={orientation}
       data-has-solved={hasSolved ? 'true' : 'false'}
+      data-game-over={session.state.gameOver ? 'true' : 'false'}
     >
       {/* TOP CHROME — at ≥ 1024px renders the full desktop header; at < 1024px
           renders the mobile variant. Only the active variant is in the DOM
@@ -228,6 +229,8 @@ export function App() {
               tracks={session.state.tracks}
               guessHistory={session.state.guessHistory}
               orientation="horizontal"
+              playingId={audio.playingId}
+              onPlay={audio.togglePlay}
             />
           </div>
         )}
@@ -264,6 +267,8 @@ export function App() {
               tracks={session.state.tracks}
               guessHistory={session.state.guessHistory}
               orientation="vertical"
+              playingId={audio.playingId}
+              onPlay={audio.togglePlay}
             />
           )}
         </aside>
@@ -276,6 +281,8 @@ export function App() {
           solvedThemes={session.solvedThemes}
           tracks={session.state.tracks}
           guessHistory={session.state.guessHistory}
+          playingId={audio.playingId}
+          onPlay={audio.togglePlay}
         />
         {session.state.gameOver && (
           <EndPanel
