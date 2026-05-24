@@ -16,12 +16,12 @@ const puzzle: Puzzle = {
       ],
     },
     {
-      theme: 'Songs used in Donnie Darko',
+      theme: 'Animal in the title',
       tracks: [
-        { id: 906900619, artist: 'Gary Jules', title: 'Mad World' },
-        { id: 1440825700, artist: 'Tears for Fears', title: 'Head Over Heels' },
-        { id: 693606402, artist: 'Duran Duran', title: 'Notorious' },
-        { id: 31740178, artist: 'Echo & the Bunnymen', title: 'The Killing Moon' },
+        { id: 1440832763, artist: 'Steve Miller Band', title: 'Fly Like an Eagle' },
+        { id: 304760997, artist: 'The Tokens', title: 'The Lion Sleeps Tonight' },
+        { id: 983126008, artist: "The B-52's", title: 'Rock Lobster' },
+        { id: 724214046, artist: 'Culture Club', title: 'Karma Chameleon' },
       ],
     },
     {

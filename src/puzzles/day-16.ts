@@ -16,16 +16,21 @@ const puzzle: Puzzle = {
       ],
     },
     {
-      theme: 'Fire in the title',
+      theme: 'Songs made for video games',
       tracks: [
-        { id: 1192962303, artist: 'The Doors', title: 'Light My Fire' },
-        { id: 251002253, artist: 'Johnny Cash', title: 'Ring of Fire' },
-        { id: 158816462, artist: 'Billy Joel', title: "We Didn't Start the Fire" },
-        { id: 1741021428, artist: 'The Prodigy', title: 'Fire' },
+        { id: 1445150297, artist: 'Breaking Benjamin', title: 'Blow Me Away', note: 'Halo 2' },
+        { id: 929920756, artist: 'Ted Poley & Tony Harnell', title: 'Escape from the City', note: 'Sonic Adventure 2' },
+        {
+          id: 1540793097,
+          artist: 'Rosa Walton & Hallie Coggins',
+          title: 'I Really Want to Stay at Your House',
+          note: 'Cyberpunk 2077 / Edgerunners',
+        },
+        { id: 1645947564, artist: 'Lil Nas X', title: "STAR WALKIN'", note: 'League of Legends' },
       ],
     },
     {
-      theme: 'A span of time in the title',
+      theme: 'A unit of time in the title',
       tracks: [
         { id: 724040009, artist: 'Robbie Williams', title: 'Millennium' },
         { id: 65122547, artist: 'Alphaville', title: 'Forever Young' },

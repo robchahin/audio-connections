@@ -7,12 +7,12 @@ const puzzle: Puzzle = {
   releaseAt: '2026-05-28T00:00:00Z',
   themes: [
     {
-      theme: 'Animal in the title',
+      theme: 'Songs about fire',
       tracks: [
-        { id: 1440832763, artist: 'Steve Miller Band', title: 'Fly Like an Eagle' },
-        { id: 304760997, artist: 'The Tokens', title: 'The Lion Sleeps Tonight' },
-        { id: 983126008, artist: "The B-52's", title: 'Rock Lobster' },
-        { id: 724214046, artist: 'Culture Club', title: 'Karma Chameleon' },
+        { id: 1121329085, artist: 'The Trammps', title: 'Disco Inferno' },
+        { id: 251002253, artist: 'Johnny Cash', title: 'Ring of Fire' },
+        { id: 158816462, artist: 'Billy Joel', title: "We Didn't Start the Fire" },
+        { id: 1741021428, artist: 'The Prodigy', title: 'Fire' },
       ],
     },
     {
@@ -21,21 +21,16 @@ const puzzle: Puzzle = {
         { id: 281116081, artist: 'Boards of Canada', title: 'ROYGBIV' },
         { id: 6920352, artist: "Israel Kamakawiwo'ole", title: 'Somewhere Over the Rainbow' },
         { id: 1440805962, artist: 'Kermit the Frog', title: 'Rainbow Connection' },
-        { id: 1440918405, artist: 'Kacey Musgraves', title: 'Rainbow' },
+        { id: 1440787254, artist: 'Louis Armstrong', title: 'What a Wonderful World' },
       ],
     },
     {
-      theme: 'Songs made for video games',
+      theme: 'Songs used in Donnie Darko',
       tracks: [
-        { id: 1445150297, artist: 'Breaking Benjamin', title: 'Blow Me Away', note: 'Halo 2' },
-        { id: 929920756, artist: 'Ted Poley & Tony Harnell', title: 'Escape from the City', note: 'Sonic Adventure 2' },
-        {
-          id: 1540793097,
-          artist: 'Rosa Walton & Hallie Coggins',
-          title: 'I Really Want to Stay at Your House',
-          note: 'Cyberpunk 2077 / Edgerunners',
-        },
-        { id: 1645947564, artist: 'Lil Nas X', title: "STAR WALKIN'", note: 'League of Legends' },
+        { id: 906900619, artist: 'Gary Jules', title: 'Mad World' },
+        { id: 1440825700, artist: 'Tears for Fears', title: 'Head Over Heels' },
+        { id: 693606402, artist: 'Duran Duran', title: 'Notorious' },
+        { id: 31740178, artist: 'Echo & the Bunnymen', title: 'The Killing Moon' },
       ],
     },
     {
