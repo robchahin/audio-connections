@@ -18,7 +18,7 @@ const puzzle: Puzzle = {
     {
       theme: 'Produce in the band name',
       tracks: [
-        { id: 1440912292, artist: 'The Cranberries', title: 'Dreams' },
+        { id: 1440735258, artist: 'The Cranberries', title: 'Dreams' },
         { id: 725821929, artist: 'Blind Melon', title: 'No Rain' },
         { id: 721224621, artist: 'The Smashing Pumpkins', title: '1979' },
         { id: 945575413, artist: 'Red Hot Chili Peppers', title: 'Californication' },
