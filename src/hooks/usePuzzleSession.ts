@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
 import type { LoadedTrack, Guess, Puzzle } from '../types';
 import { MAX_MISTAKES } from '../puzzles';
-import { fetchPreviewUrl, fetchPreviewBlobUrl, sleep } from '../itunes';
+import { fetchPreviewUrl, fetchPreviewBlobUrl } from '../itunes';
 import { SILENT_WAV } from '../mock-audio';
 import { loadState, saveState, clearState } from '../storage';
 import type { PersistedGameState } from '../storage';
@@ -370,18 +370,37 @@ export function usePuzzleSession(puzzle: Puzzle, options: UsePuzzleSessionOption
     });
 
     (async () => {
-      const previewUrls: (string | null)[] = [];
-      for (let i = 0; i < all.length; i++) {
-        if (myGen !== loadGenRef.current) return;
-        if (!mock) {
-          dispatch({ type: 'load-status', status: `Loading previews… (${i + 1}/${all.length})` });
-        }
-        if (mock) {
-          previewUrls.push(SILENT_WAV);
-        } else {
-          previewUrls.push(await fetchPreviewUrl(all[i]!.id));
-          if (i < all.length - 1) await sleep(150);
-        }
+      const previewUrls: (string | null)[] = new Array(all.length).fill(null);
+      if (mock) {
+        for (let i = 0; i < all.length; i++) previewUrls[i] = SILENT_WAV;
+      } else {
+        // Run iTunes Search lookups with a small concurrency cap rather than
+        // strictly serial. Phase 1 dominates cold-load time (~200-400ms per
+        // lookup × 16), while phase 2's CDN fetches are fast and already
+        // parallel. Cap is conservative — 4 in flight keeps us well clear of
+        // any sane per-IP limit, and fetchPreviewUrl already does 6-step
+        // exponential backoff on failure if we do trip one.
+        let nextIdx = 0;
+        let completed = 0;
+        const CONCURRENCY = 4;
+        const worker = async () => {
+          while (true) {
+            const i = nextIdx++;
+            if (i >= all.length) return;
+            if (myGen !== loadGenRef.current) return;
+            const url = await fetchPreviewUrl(all[i]!.id);
+            if (myGen !== loadGenRef.current) return;
+            previewUrls[i] = url;
+            completed += 1;
+            dispatch({
+              type: 'load-status',
+              status: `Loading previews… (${completed}/${all.length})`,
+            });
+          }
+        };
+        await Promise.all(
+          Array.from({ length: Math.min(CONCURRENCY, all.length) }, worker),
+        );
       }
       if (myGen !== loadGenRef.current) return;
 
