@@ -510,7 +510,7 @@ test.describe('Audio Connections — cold load default day', () => {
 test.describe('Audio Connections — media key / external pause sync', () => {
   // Both tests need the Audio stub installed before navigation, so each
   // sets up addInitScript + navigates manually rather than using beforeEach.
-  async function installStub(page: Parameters<typeof test>[1]['page']) {
+  async function installStub(page: Page) {
     await page.addInitScript(() => {
       // Replace the global Audio constructor with a controllable stub.
       // The real silent-WAV placeholder has 0 duration and fires 'ended' almost
