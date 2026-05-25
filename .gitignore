@@ -1,12 +1,103 @@
-.playwright-mcp/
-*.png
-# PWA icons + social share card are app assets that need to ship with the build.
-!public/icons/*.png
-!public/og-image.png
-node_modules/
+# ── Build output ──────────────────────────────────────────────────────
 dist/
-test-results/
-playwright-report/
+build/
+out/
 .vite/
 .tsbuild-node/
 *.tsbuildinfo
+
+# ── Dependencies ──────────────────────────────────────────────────────
+node_modules/
+.pnp
+.pnp.*
+.yarn/cache
+.yarn/install-state.gz
+.pnpm-store/
+jspm_packages/
+
+# ── Logs ──────────────────────────────────────────────────────────────
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ── Caches ────────────────────────────────────────────────────────────
+.npm/
+.cache/
+.parcel-cache/
+.eslintcache
+.stylelintcache
+.node_repl_history
+
+# ── Test artifacts ────────────────────────────────────────────────────
+test-results/
+playwright-report/
+playwright/.cache/
+coverage/
+*.lcov
+.nyc_output/
+.vitest-cache/
+
+# ── Env / secrets ─────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Editors / IDEs ────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.iml
+*.iws
+*.ipr
+.zed/
+.cursor/
+*.sublime-project
+*.sublime-workspace
+# Vim
+*.swp
+*.swo
+*.swn
+Session.vim
+.netrwhist
+# Emacs
+\#*\#
+.\#*
+.emacs.desktop
+.emacs.desktop.lock
+auto-save-list/
+
+# ── OS noise ──────────────────────────────────────────────────────────
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+Icon
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ── Project-specific ──────────────────────────────────────────────────
+.playwright-mcp/
+*.png
+# PWA icons + OG share image ship with the build.
+!public/icons/*.png
+!public/og-image.png
