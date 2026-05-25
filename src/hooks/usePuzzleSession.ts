@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
 import type { LoadedTrack, Guess, Puzzle } from '../types';
 import { MAX_MISTAKES } from '../puzzles';
-import { fetchPreviewUrl, fetchPreviewBlobUrl } from '../itunes';
+import { fetchTrackInfo, fetchPreviewBlobUrl, type TrackInfo } from '../itunes';
 import { SILENT_WAV } from '../mock-audio';
 import { loadState, saveState, clearState } from '../storage';
 import type { PersistedGameState } from '../storage';
@@ -370,15 +370,15 @@ export function usePuzzleSession(puzzle: Puzzle, options: UsePuzzleSessionOption
     });
 
     (async () => {
-      const previewUrls: (string | null)[] = new Array(all.length).fill(null);
+      const trackInfos: (TrackInfo | null)[] = new Array(all.length).fill(null);
       if (mock) {
-        for (let i = 0; i < all.length; i++) previewUrls[i] = SILENT_WAV;
+        for (let i = 0; i < all.length; i++) trackInfos[i] = { previewUrl: SILENT_WAV };
       } else {
         // Run iTunes Search lookups with a small concurrency cap rather than
         // strictly serial. Phase 1 dominates cold-load time (~200-400ms per
         // lookup × 16), while phase 2's CDN fetches are fast and already
         // parallel. Cap is conservative — 4 in flight keeps us well clear of
-        // any sane per-IP limit, and fetchPreviewUrl already does 6-step
+        // any sane per-IP limit, and fetchTrackInfo already does 6-step
         // exponential backoff on failure if we do trip one.
         let nextIdx = 0;
         let completed = 0;
@@ -388,9 +388,9 @@ export function usePuzzleSession(puzzle: Puzzle, options: UsePuzzleSessionOption
             const i = nextIdx++;
             if (i >= all.length) return;
             if (myGen !== loadGenRef.current) return;
-            const url = await fetchPreviewUrl(all[i]!.id);
+            const info = await fetchTrackInfo(all[i]!.id);
             if (myGen !== loadGenRef.current) return;
-            previewUrls[i] = url;
+            trackInfos[i] = info;
             completed += 1;
             dispatch({
               type: 'load-status',
@@ -409,9 +409,9 @@ export function usePuzzleSession(puzzle: Puzzle, options: UsePuzzleSessionOption
        *  the session into the `broken` state so App renders BrokenDayCard
        *  instead of the gameboard. The failed iTunes IDs flow through to
        *  pre-fill the GitHub issue body for one-click reporting. */
-      if (previewUrls.some((u) => u === null)) {
-        const failedTrackIds = previewUrls
-          .map((u, i) => (u === null ? all[i]!.id : null))
+      if (trackInfos.some((info) => info === null)) {
+        const failedTrackIds = trackInfos
+          .map((info, i) => (info === null ? all[i]!.id : null))
           .filter((id): id is number => id !== null);
         dispatch({
           type: 'load-broken',
@@ -427,11 +427,11 @@ export function usePuzzleSession(puzzle: Puzzle, options: UsePuzzleSessionOption
        *  recreate-race on Android Firefox). Each blob is ~1MB → ~16MB total
        *  per day; revoked on day switch by activeBlobUrlsRef below. */
       let cachedCount = 0;
-      const total = previewUrls.filter((u): u is string => u !== null).length;
+      const total = trackInfos.filter((info): info is TrackInfo => info !== null).length;
       const blobUrls = await Promise.all(
-        previewUrls.map(async (url) => {
-          if (!url || mock) return null;
-          const blobUrl = await fetchPreviewBlobUrl(url);
+        trackInfos.map(async (info) => {
+          if (!info || mock) return null;
+          const blobUrl = await fetchPreviewBlobUrl(info.previewUrl);
           if (blobUrl && myGen === loadGenRef.current) {
             cachedCount += 1;
             dispatch({
@@ -450,15 +450,17 @@ export function usePuzzleSession(puzzle: Puzzle, options: UsePuzzleSessionOption
 
       const loaded: LoadedTrack[] = all
         .map((x, i): LoadedTrack | null => {
-          const url = previewUrls[i];
-          if (!url) return null;
+          const info = trackInfos[i];
+          if (!info) return null;
           const t: LoadedTrack = {
             id: i,
+            itunesId: x.id,
             themeIdx: x.themeIdx,
-            previewUrl: url,
+            previewUrl: info.previewUrl,
             artist: x.artist,
             title: x.title,
           };
+          if (info.trackViewUrl) t.trackViewUrl = info.trackViewUrl;
           const blobUrl = blobUrls[i];
           if (blobUrl) t.blobUrl = blobUrl;
           if (x.note !== undefined) t.note = x.note;

@@ -1022,6 +1022,33 @@ h1 {
   color: rgba(0, 0, 0, 0.55);
   font-style: italic;
 }
+/* "Open in <service>" links trailing each solved track. Kept quiet — same
+   mono face as the row, slightly smaller, separated by middle-dots so they
+   feel like liner-note credits rather than CTAs. */
+.solved-track-links {
+  display: inline-flex;
+  gap: 0; /* dots provide the spacing */
+  margin-left: 8px;
+  font-size: 0.85em;
+  white-space: nowrap;
+}
+.solved-track-link {
+  color: rgba(0, 0, 0, 0.55);
+  text-decoration: none;
+  letter-spacing: 0.04em;
+  padding: 0 6px;
+  border-left: 1px solid rgba(0, 0, 0, 0.2);
+}
+.solved-track-link:first-child {
+  border-left: none;
+  padding-left: 0;
+}
+.solved-track-link:hover,
+.solved-track-link:focus-visible {
+  color: var(--paper-ink);
+  text-decoration: underline;
+  outline: none;
+}
 /* ── Mistakes — 4-LED VU-style meter ─────────────────────────────────── */
 .mistakes-row {
   max-width: 940px;

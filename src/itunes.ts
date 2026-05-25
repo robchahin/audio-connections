@@ -1,5 +1,15 @@
 interface ITunesLookupResult {
-  results: Array<{ previewUrl?: string }>;
+  results: Array<{ previewUrl?: string; trackViewUrl?: string }>;
+}
+
+/** Subset of fields we keep from iTunes' /lookup response. `trackViewUrl`
+ *  is the canonical music.apple.com URL Apple itself generates for the
+ *  song — for tracks on multi-track albums it includes the album id +
+ *  `?i=<trackId>` so the track is highlighted on landing. We fall back to
+ *  the looser `/song/<id>` shortcut when it's missing. */
+export interface TrackInfo {
+  previewUrl: string;
+  trackViewUrl?: string;
 }
 
 function sleep(ms: number): Promise<void> {
@@ -42,7 +52,7 @@ export function backoffDelayMs(attempt: number): number {
   return Math.min(500 * 2 ** (attempt - 1), 10_000);
 }
 
-export async function fetchPreviewUrl(itunesId: number, attempt = 1): Promise<string | null> {
+export async function fetchTrackInfo(itunesId: number, attempt = 1): Promise<TrackInfo | null> {
   const MAX_ATTEMPTS = 6;
   try {
     const result = await jsonpLookup(itunesId);
@@ -50,11 +60,13 @@ export async function fetchPreviewUrl(itunesId: number, attempt = 1): Promise<st
       console.warn(`No preview for ID ${itunesId}`);
       return null;
     }
-    return result.previewUrl;
+    const info: TrackInfo = { previewUrl: result.previewUrl };
+    if (result.trackViewUrl) info.trackViewUrl = result.trackViewUrl;
+    return info;
   } catch (e) {
     if (attempt < MAX_ATTEMPTS) {
       await sleep(backoffDelayMs(attempt));
-      return fetchPreviewUrl(itunesId, attempt + 1);
+      return fetchTrackInfo(itunesId, attempt + 1);
     }
     console.warn(`Failed to fetch ID ${itunesId} after ${attempt} attempts:`, e);
     return null;

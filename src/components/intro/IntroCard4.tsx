@@ -9,6 +9,7 @@ interface IntroCard4Props {
 
 const DEMO_TRACK: LoadedTrack = {
   id: 0,
+  itunesId: 0,
   themeIdx: 0,
   previewUrl: '',
   artist: 'Toto',

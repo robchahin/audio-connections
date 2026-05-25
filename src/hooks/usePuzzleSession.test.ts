@@ -14,6 +14,7 @@ import type { PersistedGameState } from '../storage';
 function tracks(): LoadedTrack[] {
   return Array.from({ length: 16 }, (_, id) => ({
     id,
+    itunesId: 1000 + id,
     themeIdx: Math.floor(id / 4),
     previewUrl: `mock://${id}`,
     artist: `artist ${id}`,

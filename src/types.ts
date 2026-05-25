@@ -21,6 +21,14 @@ export interface Puzzle {
 export interface LoadedTrack {
   /** Stable index for use as a game ID within a puzzle. */
   id: number;
+  /** Original iTunes trackId from the puzzle file — for music-service deep
+   *  links (Apple Music /song/<id>). Not used by the game state machine. */
+  itunesId: number;
+  /** Canonical Apple Music URL from iTunes' /lookup response. Preferred over
+   *  the /song/<id> shortcut because it includes the album id + `?i=<id>`
+   *  query, which highlights the specific track on the album page. Absent
+   *  when iTunes didn't return it or in mock mode. */
+  trackViewUrl?: string;
   themeIdx: number;
   previewUrl: string;
   /** Blob: URL of the prefetched .m4a. Absent when the prefetch failed or

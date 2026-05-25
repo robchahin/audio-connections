@@ -6,6 +6,7 @@ import type { LoadedTrack } from '../../types';
 export function displayTrack(id: number, themeIdx: number, label: string): LoadedTrack {
   return {
     id,
+    itunesId: 0,
     themeIdx,
     previewUrl: '',
     artist: '',

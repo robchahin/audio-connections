@@ -1,4 +1,5 @@
 import type { Guess, LoadedTrack, Theme } from '../types';
+import { appleMusicUrl, spotifyUrl } from '../musicLinks';
 
 interface SolvedListProps {
   themes: Theme[];
@@ -48,10 +49,30 @@ export function SolvedList({ themes, solvedThemes, tracks, guessHistory }: Solve
               {themeTracks.map((t, i) => (
                 <div key={t.id} className="solved-track-item">
                   <span className="solved-track-no">{String(i + 1).padStart(2, '0')}.</span>
-                  <span>
+                  <span className="solved-track-body">
                     <span className="solved-title">{t.title}</span>
                     <span className="solved-artist"> — {t.artist}</span>
                     {t.note && <span className="solved-note"> ({t.note})</span>}
+                    <span className="solved-track-links">
+                      <a
+                        className="solved-track-link"
+                        href={appleMusicUrl(t.itunesId, t.trackViewUrl)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`Open "${t.title}" by ${t.artist} in Apple Music`}
+                      >
+                        Apple
+                      </a>
+                      <a
+                        className="solved-track-link"
+                        href={spotifyUrl(t.artist, t.title)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`Search Spotify for "${t.title}" by ${t.artist}`}
+                      >
+                        Spotify
+                      </a>
+                    </span>
                   </span>
                 </div>
               ))}
