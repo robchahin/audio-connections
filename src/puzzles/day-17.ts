@@ -7,7 +7,7 @@ const puzzle: Puzzle = {
   releaseAt: '2026-05-26T00:00:00Z',
   themes: [
     {
-      theme: 'One-word song titles',
+      theme: 'Mononym artist, one-word song',
       tracks: [
         { id: 185717604, artist: 'Toto', title: 'Africa' },
         { id: 1097862901, artist: 'Radiohead', title: 'Just' },
