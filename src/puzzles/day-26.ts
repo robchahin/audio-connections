@@ -39,7 +39,7 @@ const puzzle: Puzzle = {
         { id: 1440928429, artist: 'Frank Zappa', title: "Don't Eat the Yellow Snow" },
         { id: 1440809049, artist: 'Lionel Richie', title: "Hello" },
         { id: 1440650733, artist: 'Queen', title: "Don't Stop Me Now" },
-        { id: 947701045, artist: 'Red Hot Chilli Peppers', title: "Suck My Kiss" },
+        { id: 947701045, artist: 'Red Hot Chili Peppers', title: "Suck My Kiss" },
       ],
     },
   ],

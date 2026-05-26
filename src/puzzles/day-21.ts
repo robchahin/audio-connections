@@ -27,7 +27,7 @@ const puzzle: Puzzle = {
     {
       theme: "Children's choir sings backing vocals",
       tracks: [
-        { id: 945571325, artist: 'The Red Hot Chili Peppers', title: 'Aeroplane' },
+        { id: 945571325, artist: 'Red Hot Chili Peppers', title: 'Aeroplane' },
         { id: 697410052, artist: 'Tina Turner', title: "We Don't Need Another Hero" },
         { id: 1527742022, artist: 'John Lennon & Yoko Ono', title: 'Happy Xmas (War Is Over)' },
         { id: 1065975638, artist: 'Pink Floyd', title: 'Another Brick in the Wall, Pt. 2' },
