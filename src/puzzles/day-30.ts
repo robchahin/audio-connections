@@ -39,7 +39,7 @@ const puzzle: Puzzle = {
         { id: 695689737, artist: 'Tina Turner', title: "Break Every Rule", note: "Phil Collins" },
         { id: 574051407, artist: 'AC/DC', title: "Thunderstruck", note: "Chris Slade" },
         { id: 1605786512, artist: 'Coldplay', title: "The Hardest Part", note: "Will Champion" },
-        { id: 1097862231, artist: 'Radiohead', title: "Creep", note: "Phil Selway" },
+        { id: 1109715479, artist: 'Radiohead', title: "Videotape", note: "Phil Selway" },
       ],
     },
   ],
