@@ -60,19 +60,18 @@ describe('puzzle calendar', () => {
     }
   });
 
-  // releaseAt is optional in the type, but every shipped puzzle must carry one:
-  // isReleased() hides any puzzle missing it, so a forgotten releaseAt would
-  // silently make a day unreachable.
-  it('every puzzle has a valid releaseAt timestamp', () => {
+  // releaseAt is required by the type and validator, but we still check the
+  // value is a parseable date and consistent with `date` — neither of those
+  // are enforced by the schema check, and a typo there breaks unlock timing.
+  it('every puzzle has a valid releaseAt timestamp matching its date', () => {
     for (const p of puzzles) {
-      expect(typeof p.releaseAt, `day ${p.day}: releaseAt is missing`).toBe('string');
-      const ms = new Date(p.releaseAt!).getTime();
+      const ms = new Date(p.releaseAt).getTime();
       expect(
         Number.isNaN(ms),
         `day ${p.day}: releaseAt "${p.releaseAt}" is not a parseable date`,
       ).toBe(false);
       expect(
-        p.releaseAt!.startsWith(p.date),
+        p.releaseAt.startsWith(p.date),
         `day ${p.day}: releaseAt "${p.releaseAt}" does not match date "${p.date}"`,
       ).toBe(true);
     }

@@ -27,6 +27,7 @@ Each puzzle lives in its own file: `src/puzzles/day-NN.ts`.
    - **`date`** and **`releaseAt`**: the date the puzzle should unlock. Ask a maintainer if you're not sure how to pick this.
    - **`author`**: your name.
    - **`themes`**: four themes, each with four tracks.
+   - **`constraint`** *(optional)*: a puzzle-wide rule that pops as a "DJ left a note" modal on every day-load, plus a pill in the desktop heading. Use for meta-themes that apply to every track (e.g. `"All singing, all dancing"`, `"Only #1 hits"`). Tells players upfront that an extra constraint is in play. **Keep it phrase-length** — there's an 80-character soft cap enforced by the validator. Long enough for a full sentence won't fit the vibe.
 
 ### Finding iTunes IDs
 

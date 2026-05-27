@@ -14,7 +14,13 @@ export interface Puzzle {
   day: number;
   date: string;
   author: string;
-  releaseAt?: string;
+  releaseAt: string;
+  /** Optional puzzle-wide constraint surfaced via the "DJ left a note"
+   *  modal on day-load (plus a desktop heading pill). Use for meta-themes
+   *  that apply to every track — e.g. "All singing, all dancing" or
+   *  "Only #1 hits". Keep it phrase-length; see MAX_CONSTRAINT_LENGTH in
+   *  puzzles.ts (currently 80 chars) — a taste cap, not a layout one. */
+  constraint?: string;
   themes: Theme[];
 }
 

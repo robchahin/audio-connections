@@ -8,7 +8,8 @@ const puzzle: Puzzle = {
   day: 1,
   date: 'YYYY-MM-DD',
   author: 'Name goes here',
-  releaseAt: '2026-05-T00:00:00Z',
+  releaseAt: 'YYYY-MM-DDT00:00:00Z',
+  // constraint: 'All singing, all dancing',  // optional pill + DJ-note modal; keep it phrase-length (80 char soft cap)
   themes: [
     {
       theme: 'Set Theme',

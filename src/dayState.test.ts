@@ -82,6 +82,7 @@ describe('pickInitialDayIndex', () => {
     day,
     date: '2026-01-01',
     author: 'test',
+    releaseAt: '2026-01-01T00:00:00Z',
     themes: [],
   }));
   const latestIdx = 2; // day 3 is the latest released

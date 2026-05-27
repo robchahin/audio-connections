@@ -19,6 +19,7 @@ import { MobileActionRow } from './components/MobileActionRow';
 import { EndPanel } from './components/EndPanel';
 import { ResetButton } from './components/ResetButton';
 import { IntroOverlay, INTRO_VERSION } from './components/intro/IntroOverlay';
+import { ConstraintModal } from './components/ConstraintModal';
 import { BrokenDayCard } from './components/BrokenDayCard';
 import { SettingsModal } from './components/SettingsModal';
 
@@ -64,6 +65,14 @@ export function App() {
     saveIntroSeenVersion(INTRO_VERSION);
     setShowIntro(false);
   }, []);
+  // Constraint modal — pops on every load/day-switch for puzzles that set
+  // a `constraint`. State lives at the App level so it resets cleanly when
+  // currentIndex changes (see effect below). `?mock=1` skips it so Playwright
+  // specs aren't blocked.
+  const isMockMode =
+    typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('mock');
+  const [showConstraintModal, setShowConstraintModal] = useState(false);
+  const dismissConstraintModal = useCallback(() => setShowConstraintModal(false), []);
   const [showSettings, setShowSettings] = useState(false);
   /** Days unlocked at runtime — by Konami (all of them) or by the countdown
    *  ticking past a `releaseAt` (one at a time). Either case adds the day
@@ -144,6 +153,15 @@ export function App() {
     saveCurrentDay(puzzle.day);
   }, [puzzle.day]);
 
+  /* ── Constraint modal: open on every day-switch (and initial load) when
+        the puzzle carries a constraint. Skipped in mock mode and while the
+        intro is still up so the two overlays don't stack. ── */
+  useEffect(() => {
+    if (isMockMode) return;
+    if (showIntro) return;
+    setShowConstraintModal(!!puzzle.constraint);
+  }, [puzzle.day, puzzle.constraint, isMockMode, showIntro]);
+
   /* ── Recompute per-day statuses from localStorage on every session change.
         usePuzzleSession's persist effect runs first (declared above), so
         localStorage is fresh for the current day. */
@@ -209,6 +227,9 @@ export function App() {
   return (
     <>
       {showIntro && <IntroOverlay onDismiss={dismissIntro} />}
+      {showConstraintModal && puzzle.constraint && (
+        <ConstraintModal constraint={puzzle.constraint} onDismiss={dismissConstraintModal} />
+      )}
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
     <div
       className="app-shell"
@@ -227,6 +248,11 @@ export function App() {
               by <span data-testid="puzzle-author">{puzzle.author}</span> ·{' '}
               <span data-testid="puzzle-date">{dateText}</span>
             </div>
+            {puzzle.constraint && (
+              <div className="puzzle-constraint" data-testid="puzzle-constraint">
+                {puzzle.constraint}
+              </div>
+            )}
             <DaySelector
               days={dayStates}
               todayDay={todayDay}
