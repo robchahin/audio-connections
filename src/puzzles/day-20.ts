@@ -11,8 +11,8 @@ const puzzle: Puzzle = {
       tracks: [
         { id: 1861769503, artist: 'The Presidents of the United States of America', title: 'Peaches' },
         { id: 1440673656, artist: 'Jimmy Buffett', title: 'Cheeseburger in Paradise' },
-        { id: 1485802967, artist: 'Harry Styles', title: 'Watermelon Sugar' },
-        { id: 275018555, artist: 'Kelis', title: 'Milkshake' },
+        { id: 250495319, artist: '"Weird Al" Yankovic', title: 'Eat It' },
+        { id: 193126493, artist: 'System of a Down', title: "Chic 'N' Stu" },
       ],
     },
     {
@@ -37,9 +37,9 @@ const puzzle: Puzzle = {
       theme: "#1 hit off the artist's debut album",
       tracks: [
         { id: 1377826892, artist: "Guns N' Roses", title: "Sweet Child o' Mine", note: 'Appetite for Destruction' },
-        { id: 716268684, artist: 'The Knack', title: 'My Sharona', note: 'Get the Knack' },
+        { id: 1321155903, artist: 'Pet Shop Boys', title: 'West End Girls', note: 'Please' },
         { id: 1308542773, artist: 'Christina Aguilera', title: 'Genie in a Bottle', note: 'Christina Aguilera' },
-        { id: 380907765, artist: 'a-ha', title: 'Take On Me', note: 'Hunting High and Low' },
+        { id: 282960968, artist: 'Men at Work', title: 'Down Under', note: 'Business as Usual' },
       ],
     },
   ],
