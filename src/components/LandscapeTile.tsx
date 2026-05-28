@@ -84,8 +84,10 @@ export function LandscapeTile({
           aria-label={playing ? 'Pause' : 'Play'}
           data-testid={`play-${track.id}`}
         >
-          <span className="icon" />
-          <span>{playing ? 'STOP' : 'PLAY'}</span>
+          <span className="play-btn__face">
+            <span className="icon" />
+            <span>{playing ? 'STOP' : 'PLAY'}</span>
+          </span>
         </button>
         <button
           type="button"
@@ -94,7 +96,7 @@ export function LandscapeTile({
           disabled={disabled || (cueLimitReached && !selected)}
           data-testid={`select-${track.id}`}
         >
-          CUE
+          <span className="select-btn__face">CUE</span>
         </button>
       </div>
 

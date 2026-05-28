@@ -88,7 +88,7 @@ export function IntroCard2({ playKey, variant }: IntroCard2Props) {
           tabIndex={-1}
           aria-hidden="true"
         >
-          SUBMIT {cuedCount} / 4
+          <span className="action__face">SUBMIT {cuedCount} / 4</span>
         </button>
       </div>
     </div>

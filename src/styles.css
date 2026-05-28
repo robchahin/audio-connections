@@ -163,6 +163,8 @@ body {
   .action {
     min-width: 0;
     flex: 1;
+  }
+  .action__face {
     padding: 11px 12px 9px;
     font-size: 11px;
     letter-spacing: 0.14em;
@@ -866,9 +868,23 @@ h1 {
   padding: 8px 10px 12px;
   z-index: 1;
 }
+/* Outer button is just the hit area — visuals and the press animation live on
+   the inner .__face span so the hit area stays put while the visible button
+   depresses. Padding-bottom extends the hit area to cover the face's pressed
+   position. */
 .play-btn,
 .select-btn {
   position: relative;
+  display: block;
+  padding: 0 0 2px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.play-btn__face,
+.select-btn__face {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -883,7 +899,6 @@ h1 {
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  cursor: pointer;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.12),
     inset 0 -1px 0 rgba(0, 0, 0, 0.4),
@@ -891,8 +906,8 @@ h1 {
     0 3px 4px rgba(0, 0, 0, 0.5);
   transition: transform 80ms ease, box-shadow 80ms ease, background var(--ease);
 }
-.play-btn:active:not(:disabled),
-.select-btn:active:not(:disabled) {
+.play-btn:active:not(:disabled) .play-btn__face,
+.select-btn:active:not(:disabled) .select-btn__face {
   transform: translateY(2px);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.12),
@@ -903,6 +918,9 @@ h1 {
 .play-btn:disabled,
 .select-btn:disabled {
   cursor: not-allowed;
+}
+.play-btn:disabled .play-btn__face,
+.select-btn:disabled .select-btn__face {
   background: #101115;
   color: var(--text-engraved);
   border-color: rgba(255, 255, 255, 0.10);
@@ -926,7 +944,7 @@ h1 {
   background: linear-gradient(90deg,
     currentColor 0 3px, transparent 3px 5px, currentColor 5px 8px);
 }
-.play-btn.playing {
+.play-btn.playing .play-btn__face {
   background: linear-gradient(180deg, #cf3a30 0%, #761814 100%);
   color: #fff8e8;
   border-color: #3a0a08;
@@ -936,7 +954,7 @@ h1 {
     0 2px 0 #2a0806,
     0 3px 10px rgba(226, 58, 46, 0.4);
 }
-.tile.selected .select-btn {
+.tile.selected .select-btn .select-btn__face {
   background: linear-gradient(180deg, #d2a648 0%, #7d5d1c 100%);
   color: #14110a;
   border-color: #2a1f08;
@@ -966,6 +984,18 @@ h1 {
 }
 .action {
   position: relative;
+  display: block;
+  padding: 0 0 3px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  min-width: 160px;
+}
+.action__face {
+  display: block;
+  text-align: center;
   font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 700;
@@ -974,7 +1004,6 @@ h1 {
   padding: 14px 28px 12px;
   border-radius: 4px;
   border: 1px solid #050608;
-  cursor: pointer;
   background: linear-gradient(180deg, #3a3b41 0%, #1c1d22 100%);
   color: #d4cebd;
   box-shadow:
@@ -983,9 +1012,8 @@ h1 {
     0 3px 0 #050608,
     0 4px 6px rgba(0, 0, 0, 0.5);
   transition: transform 80ms ease, box-shadow 80ms ease;
-  min-width: 160px;
 }
-.action:active:not(:disabled) {
+.action:active:not(:disabled) .action__face {
   transform: translateY(3px);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.12),
@@ -1001,6 +1029,8 @@ h1 {
 }
 .action:disabled {
   cursor: not-allowed;
+}
+.action:disabled .action__face {
   background: #1c1d22;
   color: var(--text-engraved);
   border-color: rgba(255, 255, 255, 0.10);
@@ -1009,7 +1039,7 @@ h1 {
     0 1px 0 #050608,
     0 2px 3px rgba(0, 0, 0, 0.35);
 }
-.action.primary {
+.action.primary .action__face {
   /* lit phosphor readout instead of brass */
   background: radial-gradient(ellipse at 50% 30%, #3a2606 0%, var(--lcd-bg) 72%);
   color: var(--lcd-fg);
@@ -1022,7 +1052,7 @@ h1 {
     0 3px 0 #050608,
     0 4px 6px rgba(0, 0, 0, 0.5);
 }
-.action.primary:disabled {
+.action.primary:disabled .action__face {
   background: #1c1d22;
   color: var(--text-engraved);
   text-shadow: none;
@@ -2071,12 +2101,21 @@ h1 {
   position: relative;
 }
 .solved-squircle {
+  padding: 0 0 1px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.solved-squircle__face {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 28px;
   height: 28px;
   border-radius: 8px;
   background: var(--text-muted);
-  border: none;
-  cursor: pointer;
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 800;
@@ -2085,17 +2124,14 @@ h1 {
     inset 0 -1px 0 rgba(0, 0, 0, 0.18),
     0 1px 2px rgba(0, 0, 0, 0.4);
   transition: transform 80ms ease;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
 }
-.solved-squircle:active {
+.solved-squircle:active .solved-squircle__face {
   transform: translateY(1px);
 }
-.solved-squircle.theme-0 { background: var(--theme-0); }
-.solved-squircle.theme-1 { background: var(--theme-1); }
-.solved-squircle.theme-2 { background: var(--theme-2); }
-.solved-squircle.theme-3 { background: var(--theme-3); }
+.solved-squircle.theme-0 .solved-squircle__face { background: var(--theme-0); }
+.solved-squircle.theme-1 .solved-squircle__face { background: var(--theme-1); }
+.solved-squircle.theme-2 .solved-squircle__face { background: var(--theme-2); }
+.solved-squircle.theme-3 .solved-squircle__face { background: var(--theme-3); }
 
 .solved-popover {
   position: absolute;
@@ -2486,8 +2522,8 @@ h1 {
   gap: 4px;
   align-self: center;
 }
-.tile-l-actions .play-btn,
-.tile-l-actions .select-btn {
+.tile-l-actions .play-btn__face,
+.tile-l-actions .select-btn__face {
   height: 22px;
   font-size: 9.5px;
   letter-spacing: 0.06em;
@@ -2897,13 +2933,15 @@ h1 {
   width: 100%;
   max-width: 540px;
   cursor: default;
+}
+.intro-submit .action__face {
   transition: box-shadow 350ms, background 350ms;
 }
-.intro-submit:not(.hot) {
+.intro-submit:not(.hot) .action__face {
   background: linear-gradient(180deg, #3a3b41 0%, #1c1d22 100%);
   color: var(--text-muted);
 }
-.intro-submit.hot {
+.intro-submit.hot .action__face {
   box-shadow:
     0 0 0 2px rgba(200, 161, 74, 0.35),
     0 0 24px rgba(200, 161, 74, 0.45);
@@ -3019,8 +3057,8 @@ h1 {
 .tile.display-only .tile-label-input {
   cursor: default;
 }
-.tile.display-only .play-btn:active:not(:disabled),
-.tile.display-only .select-btn:active:not(:disabled) {
+.tile.display-only .play-btn:active:not(:disabled) .play-btn__face,
+.tile.display-only .select-btn:active:not(:disabled) .select-btn__face {
   transform: none;
 }
 
@@ -3077,7 +3115,7 @@ h1 {
   .intro-demo-counter-big { font-size: clamp(32px, 6vw, 52px); }
 
   .intro-rules-footer { margin-top: 8px; }
-  .intro-submit { height: 38px; padding: 0 14px; }
+  .intro-submit .action__face { height: 38px; padding: 0 14px; }
 
   /* Rules card: the demo can't shrink below ~360px (cassette intrinsic
      height × 2 rows), which exceeds a 314px landscape stage. Rather than

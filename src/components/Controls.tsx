@@ -21,8 +21,10 @@ export function Controls({ selectedCount, gameOver, won, onDeselect, onSubmit }:
         disabled={gameOver || selectedCount === 0}
         data-testid="deselect-btn"
       >
-        DESELECT
-        <span className="key-stripe">EJECT ◁</span>
+        <span className="action__face">
+          <span>DESELECT</span>
+          <span className="key-stripe">EJECT ◁</span>
+        </span>
       </button>
       <button
         type="button"
@@ -31,8 +33,10 @@ export function Controls({ selectedCount, gameOver, won, onDeselect, onSubmit }:
         disabled={gameOver || selectedCount !== 4}
         data-testid="submit-btn"
       >
-        {submitText}
-        <span className="key-stripe">▷▷ PLAY</span>
+        <span className="action__face">
+          <span>{submitText}</span>
+          <span className="key-stripe">▷▷ PLAY</span>
+        </span>
       </button>
     </div>
   );

@@ -156,8 +156,10 @@ export function Tile({
           aria-label={playing ? 'Pause' : 'Play'}
           data-testid={displayOnly ? undefined : `play-${track.id}`}
         >
-          <span className="icon" />
-          <span>{playing ? 'STOP' : 'PLAY'}</span>
+          <span className="play-btn__face">
+            <span className="icon" />
+            <span>{playing ? 'STOP' : 'PLAY'}</span>
+          </span>
         </button>
         <button
           type="button"
@@ -167,7 +169,7 @@ export function Tile({
           tabIndex={displayOnly ? -1 : undefined}
           data-testid={displayOnly ? undefined : `select-${track.id}`}
         >
-          CUE
+          <span className="select-btn__face">CUE</span>
         </button>
       </div>
 

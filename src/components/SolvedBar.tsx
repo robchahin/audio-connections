@@ -66,7 +66,9 @@ export function SolvedBar({ themes, solvedThemes, tracks, guessHistory, orientat
               aria-label={`Solved: ${themes[themeIdx].theme}`}
               data-testid={`solved-squircle-${themeIdx}`}
             >
-              <span aria-hidden="true">{SIDES[themeIdx]}</span>
+              <span className="solved-squircle__face" aria-hidden="true">
+                {SIDES[themeIdx]}
+              </span>
             </button>
             {isOpen && (
               <div
