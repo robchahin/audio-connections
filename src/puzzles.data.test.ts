@@ -51,12 +51,28 @@ describe('puzzle calendar', () => {
     expect(new Set(days).size).toBe(days.length);
   });
 
-  it('filename day number matches exported day number', () => {
-    const files = readdirSync(puzzleDir).filter((f) => /^day-\d+\.ts$/.test(f));
-    for (const f of files) {
-      const expected = parseInt(/^day-(\d+)\.ts$/.exec(f)![1]!, 10);
-      const found = puzzles.find((p) => p.day === expected);
-      expect(found, `${f}: no puzzle with day=${expected} was loaded`).toBeDefined();
+  // Day numbers are now DERIVED (chronological rank from src/schedule.ts), not
+  // read from the filename — the filename is identity, not number. So we no
+  // longer assert filename === day; instead we pin the two invariants that
+  // derivation guarantees.
+  it('day numbers are dense 1..N in load order', () => {
+    puzzles.forEach((p, i) => {
+      expect(p.day, `puzzle at index ${i}`).toBe(i + 1);
+    });
+  });
+
+  it('picker order == unlock order: releaseAt never decreases as day increases', () => {
+    // The point of deriving the number from the schedule: a later day can never
+    // unlock before an earlier one. The old hand-authored scheme let day 34
+    // (Jun 30) sit before days 35/36 (Jun 14/15); that inversion is now
+    // unrepresentable.
+    for (let i = 1; i < puzzles.length; i++) {
+      const prev = new Date(puzzles[i - 1]!.releaseAt).getTime();
+      const cur = new Date(puzzles[i]!.releaseAt).getTime();
+      expect(
+        cur,
+        `day ${puzzles[i]!.day} releases before day ${puzzles[i - 1]!.day}`,
+      ).toBeGreaterThanOrEqual(prev);
     }
   });
 

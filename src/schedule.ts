@@ -184,4 +184,25 @@ export function resolve(
  *  chew on. The tangle fix (reorder 34/35/36, pin the held date) and the cutover
  *  to author slugs land in a later PR; until the loader is wired this array is
  *  not yet the source of truth for the running app. */
-export const schedule: ScheduleEntry[] = [];
+/** The live schedule — the single source of truth for ORDER. The loader
+ *  (puzzles.ts) feeds this to resolve() to derive each puzzle's number and
+ *  date; the puzzle FILES no longer decide either (their still-embedded
+ *  day/date/releaseAt are vestigial until the content-only PR strips them).
+ *
+ *  Slugs are the file stems in src/puzzles/ (currently `day-N`). Identity is
+ *  the stem, not the number — a file keeps the name `day-34` while resolving
+ *  to a different display number.
+ *
+ *  Dates auto-flow as previous + 1 day from LAUNCH_EPOCH, so a contiguous run
+ *  needs no dates at all. The only pin is the held Jun-30 date for `day-34`;
+ *  listing it LAST means its derived number (rank by date) also comes last,
+ *  and the old day-34/35/36 inversion is unrepresentable. New puzzles append
+ *  as bare entries. */
+export const schedule: ScheduleEntry[] = [
+  'day-1', 'day-2', 'day-3', 'day-4', 'day-5', 'day-6', 'day-7', 'day-8',
+  'day-9', 'day-10', 'day-11', 'day-12', 'day-13', 'day-14', 'day-15', 'day-16',
+  'day-17', 'day-18', 'day-19', 'day-20', 'day-21', 'day-22', 'day-23', 'day-24',
+  'day-25', 'day-26', 'day-27', 'day-28', 'day-29', 'day-30', 'day-31', 'day-32',
+  'day-33', 'day-35', 'day-36',
+  { slug: 'day-34', date: '2026-06-30' }, // held date — de-tangles the tail
+];
