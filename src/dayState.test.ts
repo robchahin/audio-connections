@@ -54,7 +54,7 @@ describe('deriveDayState', () => {
   };
 
   it('pulls groupsSolved and mistakes from the persisted save', () => {
-    saveState(3, {
+    saveState('3', 3, {
       selected: [],
       solvedThemes: [0, 1],
       notes: [],

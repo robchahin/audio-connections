@@ -107,10 +107,21 @@ for (const slug of contentBySlug.keys()) {
   }
 }
 
+/** Save-key identity from a slug. A legacy `day-N` slug collapses to the bare
+ *  number string so existing saves (keyed `audio-connections:day:21`) keep
+ *  working untouched; any other slug is its own id. Exact `^day-N$` match only,
+ *  so an author handle that merely starts with "day" is never mistaken for a
+ *  legacy file. */
+export function idFromSlug(slug: string): string {
+  const m = /^day-(\d+)$/.exec(slug);
+  return m ? m[1]! : slug;
+}
+
 // Derive number + date for every scheduled puzzle, then project back onto the
 // downstream Puzzle shape so nothing else in the app changes yet.
 const resolved = resolve(schedule, contentBySlug, LAUNCH_EPOCH);
 export const puzzles: Puzzle[] = resolved.map((r) => ({
+  id: idFromSlug(r.slug),
   day: r.day,
   date: r.date,
   releaseAt: r.releaseAt,

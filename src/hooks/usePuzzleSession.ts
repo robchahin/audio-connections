@@ -105,6 +105,11 @@ export interface SessionState {
    *  as the storage key, so it's structurally impossible for an outgoing
    *  day's state to be saved under the incoming day's slot. */
   day: number | null;
+  /** Save-key identity (slug-id) matching `day`. Threaded alongside `day` so a
+   *  save during a day-switch keys off the OUTGOING puzzle's id, not the
+   *  incoming prop's — and so a future slug day saves under its slug, never the
+   *  reorderable number. Null whenever `day` is. */
+  id: string | null;
   loadStatus: string;
   tracks: LoadedTrack[];
   /** Indexed by themeIdx; length equals puzzle.themes.length once loaded. */
@@ -131,6 +136,7 @@ export interface SessionState {
 export function initialSession(themeCount: number, loadStatus: string): SessionState {
   return {
     day: null,
+    id: null,
     loadStatus,
     tracks: [],
     themeStates: Array<ThemeState>(themeCount).fill('unsolved'),
@@ -148,9 +154,9 @@ export function initialSession(themeCount: number, loadStatus: string): SessionS
 export type Action =
   | { type: 'load-reset'; themeCount: number; loadStatus: string }
   | { type: 'load-status'; status: string }
-  | { type: 'load-fresh'; day: number; themeCount: number; tracks: LoadedTrack[]; loadStatus: string }
-  | { type: 'load-restore'; day: number; themeCount: number; tracks: LoadedTrack[]; persisted: PersistedGameState; loadStatus: string }
-  | { type: 'load-broken'; day: number; themeCount: number; failedTrackIds: number[] }
+  | { type: 'load-fresh'; day: number; id: string; themeCount: number; tracks: LoadedTrack[]; loadStatus: string }
+  | { type: 'load-restore'; day: number; id: string; themeCount: number; tracks: LoadedTrack[]; persisted: PersistedGameState; loadStatus: string }
+  | { type: 'load-broken'; day: number; id: string; themeCount: number; failedTrackIds: number[] }
   | { type: 'toggle-select'; id: number }
   | { type: 'deselect-all' }
   | { type: 'set-note'; id: number; note: string }
@@ -180,6 +186,7 @@ export function reducer(state: SessionState, action: Action): SessionState {
       return {
         ...initialSession(action.themeCount, action.loadStatus),
         day: action.day,
+        id: action.id,
         tracks: action.tracks,
       };
 
@@ -190,6 +197,7 @@ export function reducer(state: SessionState, action: Action): SessionState {
       }
       return {
         day: action.day,
+        id: action.id,
         loadStatus: action.loadStatus,
         tracks: action.tracks,
         themeStates,
@@ -208,6 +216,7 @@ export function reducer(state: SessionState, action: Action): SessionState {
       return {
         ...initialSession(action.themeCount, ''),
         day: action.day,
+        id: action.id,
         broken: true,
         failedTrackIds: action.failedTrackIds,
       };
@@ -375,6 +384,10 @@ export function usePuzzleSession(puzzle: Puzzle, options: UsePuzzleSessionOption
   useEffect(() => {
     const themes = puzzle.themes;
     const day = puzzle.day;
+    // Save-key identity for this puzzle. Legacy day-N → String(day); a slug day
+    // → its slug. Threaded into session state so saves key off identity, never
+    // the reorderable display number.
+    const saveId = puzzle.id ?? String(day);
     const myGen = ++loadGenRef.current;
     const mock = isMockMode();
     const all = themes.flatMap((t, themeIdx) => t.tracks.map((trk) => ({ themeIdx, ...trk })));
@@ -445,6 +458,7 @@ export function usePuzzleSession(puzzle: Puzzle, options: UsePuzzleSessionOption
         dispatch({
           type: 'load-broken',
           day,
+          id: saveId,
           themeCount: themes.length,
           failedTrackIds,
         });
@@ -516,7 +530,7 @@ export function usePuzzleSession(puzzle: Puzzle, options: UsePuzzleSessionOption
       // load-fresh / load-restore always carries a clean status.
       const loadStatus = '';
 
-      const persisted = loadState(day);
+      const persisted = loadState(saveId);
       const loadedIds = loaded.map((t) => t.id);
       if (persisted && setEqual(persisted.trackOrder, loadedIds)) {
         const byId = new Map(loaded.map((t) => [t.id, t]));
@@ -526,6 +540,7 @@ export function usePuzzleSession(puzzle: Puzzle, options: UsePuzzleSessionOption
         dispatch({
           type: 'load-restore',
           day,
+          id: saveId,
           themeCount: themes.length,
           tracks: ordered,
           persisted,
@@ -535,6 +550,7 @@ export function usePuzzleSession(puzzle: Puzzle, options: UsePuzzleSessionOption
         dispatch({
           type: 'load-fresh',
           day,
+          id: saveId,
           themeCount: themes.length,
           tracks: shuffle(loaded),
           loadStatus,
@@ -583,7 +599,7 @@ export function usePuzzleSession(puzzle: Puzzle, options: UsePuzzleSessionOption
     const solvedThemes = state.themeStates
       .map((s, i) => (s === 'exiting' || s === 'solved' ? i : -1))
       .filter((i) => i !== -1);
-    saveState(state.day, {
+    saveState(state.id ?? String(state.day), state.day, {
       selected: [...state.selected],
       solvedThemes,
       notes: [...state.notes],
@@ -661,11 +677,11 @@ export function usePuzzleSession(puzzle: Puzzle, options: UsePuzzleSessionOption
   }, [state, puzzle.themes, onStatus, onStopAudio]);
 
   const resetPuzzle = useCallback(() => {
-    if (state.day !== null) clearState(state.day);
+    if (state.day !== null) clearState(state.id ?? String(state.day));
     onStopAudio();
     dispatch({ type: 'reset-puzzle', tracks: shuffle(state.tracks) });
     onStatus('Puzzle reset.');
-  }, [state.day, state.tracks, onStatus, onStopAudio]);
+  }, [state.id, state.day, state.tracks, onStatus, onStopAudio]);
 
   return {
     state,
