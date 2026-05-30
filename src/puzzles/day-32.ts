@@ -1,10 +1,7 @@
-import type { Puzzle } from '../types';
+import type { PuzzleContent } from '../types';
 
-const puzzle: Puzzle = {
-  day: 32,
-  date: '2026-06-11',
+const puzzle: PuzzleContent = {
   author: 'Jonathon Klobucar',
-  releaseAt: '2026-06-11T00:00:00Z',
   themes: [
     {
       theme: 'City in the title',

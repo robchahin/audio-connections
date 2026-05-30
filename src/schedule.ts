@@ -11,7 +11,9 @@
  *  later PR). It can be exercised in isolation via its tests and the eventual
  *  `schedule:preview` script.
  */
-import type { Theme } from './types';
+import type { PuzzleContent } from './types';
+
+export type { PuzzleContent };
 
 /** Date of day 1 — the anchor every auto-assigned date counts from. */
 export const LAUNCH_EPOCH = '2026-05-10';
@@ -20,16 +22,6 @@ export const LAUNCH_EPOCH = '2026-05-10';
  *  the object form pins a specific calendar date (rare — honoured out-of-band
  *  date requests, or the resume date after a deliberate pause). */
 export type ScheduleEntry = string | { slug: string; date: string };
-
-/** The content half of a puzzle — everything a puzzle FILE owns. The number,
- *  date and releaseAt that used to live alongside these are derived by
- *  `resolve()` instead. (Lives here for now; moves to types.ts when the loader
- *  is reworked to read content-only files.) */
-export interface PuzzleContent {
-  author: string;
-  constraint?: string;
-  themes: Theme[];
-}
 
 /** A puzzle once the schedule has given it a position in time. */
 export interface ResolvedPuzzle {
