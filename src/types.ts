@@ -11,6 +11,19 @@ export interface Theme {
 }
 
 export interface Puzzle {
+  /** Stable identity / localStorage save key. Derived from the file slug:
+   *  a legacy `day-N.ts` file yields the bare number string (`"21"`) so its
+   *  save key stays byte-identical to the pre-derivation scheme; an authored
+   *  slug file (`tqbf-1.ts`) yields the slug itself. Unlike `day` (a derived,
+   *  reorderable display number) this never changes once assigned, which is
+   *  why saves key off it. See docs/adr/0001-derived-day-scheduling.md.
+   *
+   *  Optional transitionally: the resolved `puzzles` array always sets it, but
+   *  the puzzle data files still self-type as `Puzzle` and don't carry it.
+   *  Consumers fall back to `String(day)` (identical for legacy days). A later
+   *  PR splits the file-content type from the resolved type and makes this
+   *  required on the resolved shape. */
+  id?: string;
   day: number;
   date: string;
   author: string;

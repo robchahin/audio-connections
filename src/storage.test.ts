@@ -18,6 +18,14 @@ import type { PersistedGameState } from './storage';
 const dayKey = (day: number) => `audio-connections:day:${day}`;
 const CURRENT_DAY_KEY = 'audio-connections:currentDay';
 
+// These tests use legacy day-N puzzles, whose save id is just String(day).
+// Thin day→id wrappers keep the cases reading in day numbers while exercising
+// the string-id storage API.
+const seedDay = (day: number, s: Omit<PersistedGameState, '__v' | 'id' | 'day'>): void =>
+  saveState(String(day), day, s);
+const readDay = (day: number): PersistedGameState | null => loadState(String(day));
+const clearDay = (day: number): void => clearState(String(day));
+
 const sample: Omit<PersistedGameState, '__v' | 'day'> = {
   selected: [1, 2],
   solvedThemes: [0],
@@ -33,35 +41,35 @@ describe('day state storage', () => {
   beforeEach(() => localStorage.clear());
 
   it('round-trips a saved day', () => {
-    saveState(5, sample);
-    expect(loadState(5)).toEqual({ __v: 1, day: 5, ...sample });
+    seedDay(5, sample);
+    expect(readDay(5)).toEqual({ __v: 1, id: '5', day: 5, ...sample });
   });
 
   it('returns null for a day that was never saved', () => {
-    expect(loadState(99)).toBeNull();
+    expect(readDay(99)).toBeNull();
   });
 
   it('rejects a payload whose schema version does not match', () => {
     localStorage.setItem(dayKey(5), JSON.stringify({ __v: 999, day: 5, ...sample }));
-    expect(loadState(5)).toBeNull();
+    expect(readDay(5)).toBeNull();
   });
 
   it('rejects a payload whose day field does not match its slot', () => {
     // An older build once wrote day N-1's state into day N's key; this guard
     // is what stops that contamination from being read back.
     localStorage.setItem(dayKey(6), JSON.stringify({ __v: 1, day: 5, ...sample }));
-    expect(loadState(6)).toBeNull();
+    expect(readDay(6)).toBeNull();
   });
 
   it('returns null for malformed JSON instead of throwing', () => {
     localStorage.setItem(dayKey(5), '{ not json');
-    expect(loadState(5)).toBeNull();
+    expect(readDay(5)).toBeNull();
   });
 
   it('clearState removes a saved day', () => {
-    saveState(5, sample);
-    clearState(5);
-    expect(loadState(5)).toBeNull();
+    seedDay(5, sample);
+    clearDay(5);
+    expect(readDay(5)).toBeNull();
   });
 });
 

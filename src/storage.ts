@@ -7,8 +7,15 @@ const INTRO_SEEN_KEY = 'audio-connections:introSeen';
 
 export interface PersistedGameState {
   __v: number;
-  /** Puzzle day this state belongs to. Defensive check against
-      cross-day contamination if save fires with a mismatched key. */
+  /** Stable save identity (the puzzle's slug-id). Written by current builds;
+   *  optional because saves written before the string-id migration don't carry
+   *  it — there `day` served this role, and loadState falls back to
+   *  `String(day)` for those. */
+  id?: string;
+  /** Puzzle day this state belongs to. Kept alongside `id` so a build from
+   *  before the migration (e.g. an old tab still open during a deploy) can
+   *  still read a save this build wrote — its integrity check keys off `day`.
+   *  Also the cross-day-contamination guard. */
   day: number;
   selected: number[];
   solvedThemes: number[];
@@ -22,40 +29,54 @@ export interface PersistedGameState {
   guessSignatures: string[];
 }
 
-function key(day: number): string {
-  return `${PREFIX}${day}`;
+function key(id: string): string {
+  return `${PREFIX}${id}`;
 }
 
-export function loadState(day: number): PersistedGameState | null {
+/** Identity a persisted record claims. Prefers the explicit `id`; falls back to
+ *  the numeric `day` for records written before the string-id migration. For a
+ *  legacy `day-N` puzzle the id IS `String(day)`, so a pre-migration save and a
+ *  current one resolve to the same identity and the same key. */
+function savedId(parsed: PersistedGameState): string {
+  return parsed.id ?? String(parsed.day);
+}
+
+export function loadState(id: string): PersistedGameState | null {
   if (typeof localStorage === 'undefined') return null;
   try {
-    const raw = localStorage.getItem(key(day));
+    const raw = localStorage.getItem(key(id));
     if (!raw) return null;
     const parsed = JSON.parse(raw) as PersistedGameState;
     if (parsed.__v !== VERSION) return null;
-    // Reject stale entries whose day field doesn't match the slot. This
-    // catches cross-day writes (e.g. older builds saved Day N-1's state
-    // into Day N's slot).
-    if (parsed.day !== day) return null;
+    // Reject stale entries whose identity doesn't match the slot — catches a
+    // cross-day write (an older build saving Day N-1's state into Day N's slot).
+    if (savedId(parsed) !== id) return null;
     return parsed;
   } catch {
     return null;
   }
 }
 
-export function saveState(day: number, state: Omit<PersistedGameState, '__v' | 'day'>): void {
+/** Persist a day's state. `id` is the save key (stable slug-id); `day` is the
+ *  display number, written for back-compat so a pre-migration build can still
+ *  read this record. */
+export function saveState(
+  id: string,
+  day: number,
+  state: Omit<PersistedGameState, '__v' | 'id' | 'day'>,
+): void {
   if (typeof localStorage === 'undefined') return;
   try {
-    localStorage.setItem(key(day), JSON.stringify({ __v: VERSION, day, ...state }));
+    localStorage.setItem(key(id), JSON.stringify({ __v: VERSION, id, day, ...state }));
   } catch {
     /* quota or disabled storage — ignore */
   }
 }
 
-export function clearState(day: number): void {
+export function clearState(id: string): void {
   if (typeof localStorage === 'undefined') return;
   try {
-    localStorage.removeItem(key(day));
+    localStorage.removeItem(key(id));
   } catch {
     /* ignore */
   }

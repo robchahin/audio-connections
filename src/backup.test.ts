@@ -1,19 +1,26 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { applyBackup, collectBackup } from './backup';
 import { puzzles, MAX_MISTAKES } from './puzzles';
-import { loadCurrentDay, loadIntroSeenVersion, loadState, saveCurrentDay, saveIntroSeenVersion, saveState } from './storage';
+import { loadCurrentDay, loadIntroSeenVersion, loadState, saveCurrentDay, saveIntroSeenVersion, saveState, type PersistedGameState } from './storage';
 import type { PerDayRecord } from './transfer';
 
 const dayA = puzzles[0]!.day;
 const dayB = puzzles[1]!.day;
 const dayC = puzzles[2]!.day;
 
+// These tests predate the string-id save key. The puzzles used here are all
+// legacy day-N, whose id === String(day), so thin day→id wrappers keep the
+// cases reading in day numbers while exercising the string-id storage API.
+const seedDay = (day: number, s: Omit<PersistedGameState, '__v' | 'id' | 'day'>): void =>
+  saveState(String(day), day, s);
+const readDay = (day: number): PersistedGameState | null => loadState(String(day));
+
 describe('collectBackup', () => {
   beforeEach(() => localStorage.clear());
 
   it('returns terminal records in puzzle order, skipping in-progress and unplayed days', () => {
     // dayA: won (3 themes via guess, all four solvedThemes from auto-reveal).
-    saveState(dayA, {
+    seedDay(dayA, {
       selected: [],
       solvedThemes: [0, 1, 2, 3],
       notes: [],
@@ -30,7 +37,7 @@ describe('collectBackup', () => {
       guessSignatures: [],
     });
     // dayB: in-progress, skipped.
-    saveState(dayB, {
+    seedDay(dayB, {
       selected: [1],
       solvedThemes: [],
       notes: [],
@@ -41,7 +48,7 @@ describe('collectBackup', () => {
       guessSignatures: [],
     });
     // dayC: lost.
-    saveState(dayC, {
+    seedDay(dayC, {
       selected: [],
       solvedThemes: [0, 1, 2, 3],
       notes: [],
@@ -93,7 +100,7 @@ describe('applyBackup', () => {
 
   it('replaces all per-day records and leaves singletons untouched', () => {
     // Pre-existing state on dayA that should be wiped.
-    saveState(dayA, {
+    seedDay(dayA, {
       selected: [1, 2],
       solvedThemes: [0],
       notes: [[3, 'note']],
@@ -121,9 +128,9 @@ describe('applyBackup', () => {
     applyBackup(incoming);
 
     // dayA wiped.
-    expect(loadState(dayA)).toBeNull();
+    expect(readDay(dayA)).toBeNull();
     // dayB materialized as a terminal won record.
-    const restored = loadState(dayB);
+    const restored = readDay(dayB);
     expect(restored).not.toBeNull();
     expect(restored!.gameOver).toBe(true);
     expect(restored!.solvedThemes).toEqual([0, 1, 2, 3]);
@@ -145,13 +152,13 @@ describe('applyBackup', () => {
       { day: dayA, outcome: 'won' },
       { day: dayB, outcome: 'lost' },
     ]);
-    const won = loadState(dayA)!;
+    const won = readDay(dayA)!;
     expect(won.gameOver).toBe(true);
     expect(won.guessHistory).toEqual([]);
     expect(won.mistakes).toBe(0);
     expect(won.solvedThemes).toEqual([0, 1, 2, 3]);
 
-    const lost = loadState(dayB)!;
+    const lost = readDay(dayB)!;
     expect(lost.gameOver).toBe(true);
     expect(lost.guessHistory).toEqual([]);
     expect(lost.mistakes).toBe(MAX_MISTAKES);
@@ -173,6 +180,6 @@ describe('applyBackup', () => {
         ],
       },
     ]);
-    expect(loadState(dayA)!.mistakes).toBe(2);
+    expect(readDay(dayA)!.mistakes).toBe(2);
   });
 });
