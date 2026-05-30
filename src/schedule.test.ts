@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   LAUNCH_EPOCH,
   resolve,
+  schedule as liveSchedule,
   type PuzzleContent,
   type ScheduleEntry,
 } from './schedule';
@@ -180,5 +181,48 @@ describe('resolve — golden master (frozen released prefix)', () => {
     const map = new Map<string, PuzzleContent>([['day-1', content('Corey Farwell')]]);
     const [p] = resolve(['day-1'], map, LAUNCH_EPOCH);
     expect(p!.content.author).toBe('Corey Farwell');
+  });
+});
+
+describe('the live schedule resolves the current catalogue correctly', () => {
+  // Resolve the REAL schedule against synthetic content (one stub per scheduled
+  // slug) so this pins the schedule's number/date output independent of puzzle
+  // file contents. It is the migration's source of truth for what each file
+  // resolves to.
+  const stub = new Map<string, PuzzleContent>(
+    liveSchedule.map((e) => {
+      const slug = typeof e === 'string' ? e : e.slug;
+      return [slug, content(slug)] as const;
+    }),
+  );
+  const out = resolve(liveSchedule, stub, LAUNCH_EPOCH);
+  const bySlug = new Map(out.map((p) => [p.slug, p]));
+  const at = (slug: string): readonly [number, string] => {
+    const p = bySlug.get(slug);
+    if (!p) throw new Error(`slug ${slug} not resolved`);
+    return [p.day, p.date];
+  };
+
+  it('covers all 36 catalogue days, dense 1..36, chronological', () => {
+    expect(out).toHaveLength(36);
+    out.forEach((p, i) => expect(p.day).toBe(i + 1));
+    for (let i = 1; i < out.length; i++) {
+      expect(out[i]!.date >= out[i - 1]!.date).toBe(true);
+    }
+  });
+
+  it('keeps the released prefix frozen (days 1, 21, 22, 31 on their real dates)', () => {
+    expect(at('day-1')).toEqual([1, '2026-05-10']);
+    expect(at('day-21')).toEqual([21, '2026-05-30']); // latest released as of now
+    expect(at('day-22')).toEqual([22, '2026-05-31']); // unlocks tonight (5pm PDT)
+    expect(at('day-31')).toEqual([31, '2026-06-09']);
+  });
+
+  it('de-tangles 34/35/36 and re-flows the tail (gap closes, Jun-30 held)', () => {
+    expect(at('day-32')).toEqual([32, '2026-06-10']); // Jun-10 gap closes
+    expect(at('day-33')).toEqual([33, '2026-06-11']);
+    expect(at('day-35')).toEqual([34, '2026-06-12']); // file day-35 → #34
+    expect(at('day-36')).toEqual([35, '2026-06-13']); // file day-36 → #35
+    expect(at('day-34')).toEqual([36, '2026-06-30']); // file day-34 → #36 (held)
   });
 });
