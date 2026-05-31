@@ -11,13 +11,15 @@ import { readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { Puzzle, PuzzleContent } from '../../src/types';
-import { LAUNCH_EPOCH, resolve, schedule } from '../../src/schedule';
+import { LAUNCH_EPOCH, idFromSlug, resolve, schedule } from '../../src/schedule';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const dir = join(here, '..', '..', 'src', 'puzzles');
 
+// Every puzzle file by stem — `day-N` back-catalogue plus author slugs — minus
+// the non-puzzle template. Matches the loader's glob in src/puzzles.ts.
 const files = readdirSync(dir)
-  .filter((f) => /^day-\d+\.ts$/.test(f))
+  .filter((f) => f !== 'template.ts' && f.endsWith('.ts'))
   .sort();
 
 const contentBySlug = new Map<string, PuzzleContent>();
@@ -27,14 +29,9 @@ for (const f of files) {
   contentBySlug.set(slug, mod.default);
 }
 
-// Mirror src/puzzles.ts idFromSlug: a legacy `day-N` slug collapses to its bare
-// number string so save keys stay stable; any other slug is its own id.
-function idFromSlug(slug: string): string {
-  const m = /^day-(\d+)$/.exec(slug);
-  return m ? m[1]! : slug;
-}
-
 // Project resolved puzzles onto the same `Puzzle` shape src/puzzles.ts exports.
+// idFromSlug is imported from src/schedule.ts — the same pure function the app
+// uses, so save keys are derived identically here (no local mirror to drift).
 export const puzzles: Puzzle[] = resolve(schedule, contentBySlug, LAUNCH_EPOCH).map((r) => ({
   id: idFromSlug(r.slug),
   day: r.day,

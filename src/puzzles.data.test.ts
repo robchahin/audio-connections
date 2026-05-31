@@ -34,15 +34,20 @@ describe('every puzzle has the required shape', () => {
 });
 
 describe('puzzle calendar', () => {
-  it('every file in src/puzzles/ matches the day-N.ts naming convention', () => {
+  // File stems are kebab-case slugs: the released back-catalogue is `day-N`,
+  // newer puzzles use author slugs (`<github-handle>-N`). Both are lowercase
+  // letters/digits joined by hyphens — this catches stray or mis-cased files.
+  const SLUG_FILE_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*\.ts$/;
+
+  it('every file in src/puzzles/ is a kebab-case slug', () => {
     const files = readdirSync(puzzleDir).filter((f) => f !== 'template.ts');
     for (const f of files) {
-      expect(f, `unexpected file in src/puzzles/: ${f}`).toMatch(/^day-\d+\.ts$/);
+      expect(f, `unexpected file in src/puzzles/: ${f}`).toMatch(SLUG_FILE_RE);
     }
   });
 
-  it('every day-N.ts file is loaded into the puzzles array', () => {
-    const files = readdirSync(puzzleDir).filter((f) => /^day-\d+\.ts$/.test(f));
+  it('every puzzle file is loaded into the puzzles array', () => {
+    const files = readdirSync(puzzleDir).filter((f) => f !== 'template.ts' && SLUG_FILE_RE.test(f));
     expect(puzzles.length).toBe(files.length);
   });
 

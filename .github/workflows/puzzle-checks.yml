@@ -20,7 +20,8 @@ name: Puzzle PR checks
 on:
   pull_request:
     paths:
-      - 'src/puzzles/day-*.ts'
+      - 'src/puzzles/*.ts'
+      - '!src/puzzles/template.ts'
   workflow_dispatch:
 
 permissions:

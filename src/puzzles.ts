@@ -1,5 +1,10 @@
 import type { Puzzle, PuzzleContent } from './types';
-import { LAUNCH_EPOCH, resolve, schedule } from './schedule';
+import { LAUNCH_EPOCH, idFromSlug, resolve, schedule } from './schedule';
+
+// idFromSlug is the slug→save-key derivation; it lives in schedule.ts (pure,
+// loader-free) so the schedule tests can assert save-key stability. Re-exported
+// here because callers historically imported it from the puzzles module.
+export { idFromSlug } from './schedule';
 
 class PuzzleSchemaError extends Error {}
 const fail = (source: string, msg: string): never => {
@@ -70,14 +75,20 @@ export function validatePuzzleContent(p: unknown, source: string): asserts p is 
 }
 
 /** Map a puzzle file path to its slug (the file stem). Identity, not number —
- *  `./puzzles/day-34.ts` → `day-34`. */
+ *  `./puzzles/day-22.ts` → `day-22`, `./puzzles/tqbf-1.ts` → `tqbf-1`. */
 function slugFromPath(path: string): string {
   const m = /\/([^/]+)\.ts$/.exec(path);
   if (!m) throw new Error(`Unexpected puzzle path: ${path}`);
   return m[1]!;
 }
 
-const modules = import.meta.glob<{ default: unknown }>('./puzzles/day-*.ts', { eager: true });
+// Every puzzle file, by stem — released back-catalogue is `day-N`, newer
+// puzzles use author slugs, so we glob all of src/puzzles/ and exclude only the
+// non-puzzle template. The slug IS the file stem (see slugFromPath).
+const modules = import.meta.glob<{ default: unknown }>(
+  ['./puzzles/*.ts', '!./puzzles/template.ts'],
+  { eager: true },
+);
 
 // Build the content map keyed by slug. Files now export PuzzleContent directly
 // (no day/date/releaseAt); resolve() owns number + date.
@@ -97,16 +108,6 @@ for (const slug of contentBySlug.keys()) {
   if (!scheduledSlugs.has(slug)) {
     throw new Error(`Puzzle file "${slug}.ts" exists but is not in the schedule (src/schedule.ts)`);
   }
-}
-
-/** Save-key identity from a slug. A legacy `day-N` slug collapses to the bare
- *  number string so existing saves (keyed `audio-connections:day:21`) keep
- *  working untouched; any other slug is its own id. Exact `^day-N$` match only,
- *  so an author handle that merely starts with "day" is never mistaken for a
- *  legacy file. */
-export function idFromSlug(slug: string): string {
-  const m = /^day-(\d+)$/.exec(slug);
-  return m ? m[1]! : slug;
 }
 
 // Derive number + date for every scheduled puzzle, then project back onto the
