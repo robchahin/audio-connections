@@ -34,7 +34,7 @@ const puzzle: Puzzle = {
       ],
     },
     {
-      theme: 'Dancers turned pop stars',
+      theme: 'Dancers turned singers',
       tracks: [
         { id: 723700423, artist: 'Paula Abdul', title: 'Straight Up', note: 'Laker Girl' },
         { id: 265144699, artist: 'Jennifer Lopez', title: 'Waiting for Tonight', note: 'Fly Girl on In Living Color' },
