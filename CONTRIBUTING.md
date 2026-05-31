@@ -22,6 +22,7 @@ npm run test:itunes    Vitest with the iTunes config. ~10-20s. Hits the iTunes A
 npm test               Playwright end-to-end. ~30-60s. Boots dev server, drives Chromium.
 npm run validate       Composite for puzzle authors: npm run typecheck + test:unit + test:itunes + test:past-days.
 npm run test:past-days Fails if you moved an already-released puzzle (reorder/rename/re-date). Diffs against origin/main.
+npm run schedule:preview  Print the resolved schedule (day → slug → date) plus warnings (thin runway, calendar gaps). Read-only.
 ```
 
 `npm run setup` also points git at the committed `.githooks/` directory, installing a pre-commit hook that runs `test:past-days` when you stage `src/schedule.ts` or a puzzle file. It's a best-effort local mirror of CI — bypass a false alarm with `git commit --no-verify`.

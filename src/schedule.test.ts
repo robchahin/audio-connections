@@ -3,6 +3,7 @@ import {
   LAUNCH_EPOCH,
   diffPastDays,
   idFromSlug,
+  previewWarnings,
   resolve,
   schedule as liveSchedule,
   type PuzzleContent,
@@ -344,5 +345,53 @@ describe('diffPastDays — released days are frozen, the future is free', () => 
   it('rejects a malformed today', () => {
     const s = run(['a'], EPOCH);
     expect(() => diffPastDays(s, s, '2026/05/12')).toThrow(/Invalid "today"/);
+  });
+});
+
+describe('previewWarnings', () => {
+  const EPOCH = '2026-05-10';
+
+  it('is quiet for a healthy schedule with ample runway and no gaps', () => {
+    // 8 contiguous days from epoch; today is day 1, so 7 are in the future.
+    const s = run(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'], EPOCH);
+    expect(previewWarnings(s, '2026-05-10', { runway: 5 })).toEqual([]);
+  });
+
+  it('warns when the runway is thin', () => {
+    const s = run(['a', 'b', 'c', 'd', 'e'], EPOCH); // 05-10..05-14
+    // today = 05-12 → future = d(13), e(14) = 2 < 5.
+    const w = previewWarnings(s, '2026-05-12', { runway: 5 });
+    expect(w.map((x) => x.kind)).toContain('thin-runway');
+    expect(w.find((x) => x.kind === 'thin-runway')!.message).toMatch(/2 future puzzle/);
+  });
+
+  it('flags a forward gap but not a historical one', () => {
+    // a=05-10, b=05-11, then a pinned jump to 05-20 (8 empty days), then c.
+    const s = run(['a', 'b', { slug: 'far', date: '2026-05-20' }], EPOCH);
+    // today = 05-10: the 05-11→05-20 gap is in the future → flagged.
+    const future = previewWarnings(s, '2026-05-10', { runway: 1, gapDays: 2 });
+    expect(future.filter((x) => x.kind === 'gap')).toHaveLength(1);
+    expect(future.find((x) => x.kind === 'gap')!.message).toMatch(/8 empty day/);
+    // today = 05-25: the whole gap is in the past → not flagged.
+    const past = previewWarnings(s, '2026-05-25', { runway: 0, gapDays: 2 });
+    expect(past.filter((x) => x.kind === 'gap')).toHaveLength(0);
+  });
+
+  it('does not flag a single-day-apart contiguous run as a gap', () => {
+    const s = run(['a', 'b', 'c'], EPOCH);
+    const w = previewWarnings(s, '2026-05-10', { runway: 1, gapDays: 2 });
+    expect(w.filter((x) => x.kind === 'gap')).toHaveLength(0);
+  });
+
+  it('flags a run-dry queue whose last puzzle is in the past', () => {
+    const s = run(['a', 'b', 'c'], EPOCH); // last = 05-12
+    const w = previewWarnings(s, '2026-05-20', { runway: 0 });
+    expect(w.map((x) => x.kind)).toContain('past-unreleased');
+    expect(w.find((x) => x.kind === 'past-unreleased')!.message).toMatch(/run dry/);
+  });
+
+  it('rejects a malformed today', () => {
+    const s = run(['a'], EPOCH);
+    expect(() => previewWarnings(s, 'nope')).toThrow(/Invalid "today"/);
   });
 });

@@ -251,3 +251,92 @@ export function diffPastDays(
   }
   return violations;
 }
+
+/** A maintainer-facing warning about the shape of the schedule. Advisory, not
+ *  fatal — these flag things worth a look, not broken state. */
+export interface ScheduleWarning {
+  kind: 'gap' | 'thin-runway' | 'past-unreleased';
+  message: string;
+}
+
+/** Default runway floor: warn when fewer than this many future puzzles remain.
+ *  A healthy state is a shallow committed frontier refilled from a deeper
+ *  backlog, so a low number here is the prompt to slot more, not an error. */
+export const DEFAULT_RUNWAY = 5;
+/** Default gap threshold: flag a stretch of this many empty calendar days or
+ *  more between two consecutive scheduled dates. */
+export const DEFAULT_GAP_DAYS = 2;
+
+export interface PreviewOptions {
+  /** Min future puzzles before a thin-runway warning. Default DEFAULT_RUNWAY. */
+  runway?: number;
+  /** Empty-day run that triggers a gap warning. Default DEFAULT_GAP_DAYS. */
+  gapDays?: number;
+}
+
+/** Analyse a resolved schedule against `today` and surface maintainer warnings.
+ *  Pure (caller supplies `today`, YYYY-MM-DD UTC) so it's deterministic and
+ *  unit-testable; the CLI wrapper (schedule:preview) supplies the clock and
+ *  renders the table. Three checks:
+ *    - gap: ≥ gapDays empty calendar days between consecutive puzzles, looking
+ *      only from today onward (historical gaps are immutable, not actionable).
+ *    - thin-runway: fewer than `runway` future-dated (> today) puzzles left.
+ *    - past-unreleased: an unreleased puzzle whose date is already < today,
+ *      i.e. it would release instantly / in the past — almost always a stale
+ *      pin that needs re-dating. (resolve() output is date-sorted, so "the
+ *      earliest unreleased is in the past" is the meaningful case.) */
+export function previewWarnings(
+  resolved: readonly ResolvedPuzzle[],
+  today: string,
+  opts: PreviewOptions = {},
+): ScheduleWarning[] {
+  if (!DATE_RE.test(today)) throw new Error(`Invalid "today" date "${today}" (want YYYY-MM-DD)`);
+  const runway = opts.runway ?? DEFAULT_RUNWAY;
+  const gapDays = opts.gapDays ?? DEFAULT_GAP_DAYS;
+  const todayN = toDayNumber(today);
+  const warnings: ScheduleWarning[] = [];
+
+  // thin-runway: how many puzzles are still ahead of today.
+  const future = resolved.filter((p) => toDayNumber(p.date) > todayN);
+  if (future.length < runway) {
+    warnings.push({
+      kind: 'thin-runway',
+      message:
+        `Only ${future.length} future puzzle(s) scheduled (want ≥ ${runway}). ` +
+        `Slot more from the backlog to keep the frontier ahead of today (${today}).`,
+    });
+  }
+
+  // gap: scan consecutive pairs whose later date is today or beyond. An empty
+  // run of N days shows as a date delta of N+1.
+  for (let i = 1; i < resolved.length; i++) {
+    const prev = resolved[i - 1]!;
+    const cur = resolved[i]!;
+    const prevN = toDayNumber(prev.date);
+    const curN = toDayNumber(cur.date);
+    if (curN <= todayN) continue; // gap is in the past — immutable, skip
+    const empty = curN - prevN - 1;
+    if (empty >= gapDays) {
+      warnings.push({
+        kind: 'gap',
+        message:
+          `${empty} empty day(s) between ${prev.slug} (${prev.date}) and ${cur.slug} (${cur.date}). ` +
+          `Slot puzzles BEFORE ${cur.slug} to fill them, or this window has no puzzle.`,
+      });
+    }
+  }
+
+  // past-unreleased: the frontier has fallen behind — the latest scheduled date
+  // is before today, so there is no puzzle for today or beyond.
+  const last = resolved[resolved.length - 1];
+  if (last && toDayNumber(last.date) < todayN) {
+    warnings.push({
+      kind: 'past-unreleased',
+      message:
+        `The last scheduled puzzle ${last.slug} is dated ${last.date}, before today (${today}). ` +
+        `The queue has run dry — there is no puzzle for today.`,
+    });
+  }
+
+  return warnings;
+}
