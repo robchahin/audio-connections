@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   LAUNCH_EPOCH,
+  diffPastDays,
   idFromSlug,
   resolve,
   schedule as liveSchedule,
@@ -267,5 +268,81 @@ describe('idFromSlug', () => {
     expect(idFromSlug('day-1-extra')).toBe('day-1-extra');
     expect(idFromSlug('dayton-3')).toBe('dayton-3');
     expect(idFromSlug('day-')).toBe('day-');
+  });
+});
+
+describe('diffPastDays — released days are frozen, the future is free', () => {
+  // Resolve from a fixed epoch so "released" is decided by `today`, not the
+  // host clock. Epoch 2026-05-10: a..e are 05-10..05-14.
+  const EPOCH = '2026-05-10';
+  const TODAY = '2026-05-12'; // a, b, c are released (<= today); d, e are future.
+
+  it('reports nothing when the schedule is unchanged', () => {
+    const s = run(['a', 'b', 'c', 'd', 'e'], EPOCH);
+    expect(diffPastDays(s, s, TODAY)).toEqual([]);
+  });
+
+  it('reports nothing when a new puzzle is appended (the common case)', () => {
+    const before = run(['a', 'b', 'c', 'd', 'e'], EPOCH);
+    const after = run(['a', 'b', 'c', 'd', 'e', 'f'], EPOCH);
+    expect(diffPastDays(before, after, TODAY)).toEqual([]);
+  });
+
+  it('reports nothing when a future puzzle is reordered or inserted', () => {
+    const before = run(['a', 'b', 'c', 'd', 'e'], EPOCH);
+    // d and e are both future (> today); swapping them is allowed.
+    const after = run(['a', 'b', 'c', 'e', 'd'], EPOCH);
+    expect(diffPastDays(before, after, TODAY)).toEqual([]);
+  });
+
+  it('flags a released day that gets renumbered by a reorder', () => {
+    const before = run(['a', 'b', 'c', 'd', 'e'], EPOCH);
+    const after = run(['b', 'a', 'c', 'd', 'e'], EPOCH); // a and b (both released) swap
+    const v = diffPastDays(before, after, TODAY);
+    expect(v).toEqual([
+      { slug: 'a', before: { day: 1, date: '2026-05-10' }, after: { day: 2, date: '2026-05-11' }, reason: 'redated' },
+      { slug: 'b', before: { day: 2, date: '2026-05-11' }, after: { day: 1, date: '2026-05-10' }, reason: 'redated' },
+    ]);
+  });
+
+  it('flags a released day whose file was renamed (slug vanishes)', () => {
+    const before = run(['a', 'b', 'c', 'd', 'e'], EPOCH);
+    const after = run(['a', 'renamed', 'c', 'd', 'e'], EPOCH); // b → renamed
+    expect(diffPastDays(before, after, TODAY)).toEqual([
+      { slug: 'b', before: { day: 2, date: '2026-05-11' }, after: null, reason: 'removed' },
+    ]);
+  });
+
+  it("freezes TODAY's just-launched puzzle against reordering", () => {
+    // c is dated exactly TODAY — already seen by players, so it must not move,
+    // even though it only released hours ago.
+    const before = run(['a', 'b', 'c', 'd', 'e'], EPOCH);
+    const after = run(['a', 'b', 'd', 'c', 'e'], EPOCH); // c (today) and d (future) swap
+    const v = diffPastDays(before, after, TODAY);
+    expect(v.map((x) => x.slug)).toEqual(['c']); // only c is past; d was future
+    expect(v[0]!.reason).toBe('redated');
+  });
+
+  it('distinguishes a pure renumber from a redate', () => {
+    // Two puzzles pinned to one day (two-per-day): swapping their list order
+    // keeps both dates but flips their numbers — a renumber, not a redate.
+    const before = run(
+      [{ slug: 'a', date: '2026-05-10' }, { slug: 'b', date: '2026-05-10' }],
+      EPOCH,
+    );
+    const after = run(
+      [{ slug: 'b', date: '2026-05-10' }, { slug: 'a', date: '2026-05-10' }],
+      EPOCH,
+    );
+    const v = diffPastDays(before, after, '2026-05-10');
+    expect(v.map((x) => [x.slug, x.reason])).toEqual([
+      ['a', 'renumbered'],
+      ['b', 'renumbered'],
+    ]);
+  });
+
+  it('rejects a malformed today', () => {
+    const s = run(['a'], EPOCH);
+    expect(() => diffPastDays(s, s, '2026/05/12')).toThrow(/Invalid "today"/);
   });
 });

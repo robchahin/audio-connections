@@ -202,3 +202,52 @@ export function idFromSlug(slug: string): string {
   const m = /^day-(\d+)$/.exec(slug);
   return m ? m[1]! : slug;
 }
+
+/** A released puzzle whose identity/position changed between two schedules. */
+export interface PastDayViolation {
+  slug: string;
+  /** Number + date in the baseline (the already-released state). */
+  before: { day: number; date: string };
+  /** Number + date now, or null if the slug is gone from the new schedule. */
+  after: { day: number; date: string } | null;
+  reason: 'renumbered' | 'redated' | 'removed';
+}
+
+/** Compare two resolved schedules and report any ALREADY-RELEASED puzzle whose
+ *  identity moved. A puzzle counts as released when its date is on or before
+ *  `today` (UTC, YYYY-MM-DD) — note this includes today's just-launched puzzle,
+ *  whose number/date players have already seen.
+ *
+ *  This is the orphaned-saves + public-record guard. A released `day-N` file's
+ *  save key is its bare number and its (number, date) are a matter of record;
+ *  an author-slug day freezes the same way once it ships. Renaming a released
+ *  file (its slug vanishes → `removed`), reordering one (`renumbered`), or
+ *  shifting a pin across it (`redated`) all surface here. CONTENT edits — swap
+ *  a broken track, fix a theme — do NOT change (slug, day, date) and so never
+ *  trip this, which is exactly the current-day fix-up workflow we must allow.
+ *
+ *  Pure (no clock, no I/O): the caller passes `today` and the two resolved
+ *  lists, so this is deterministic and unit-testable. The wall-clock + git
+ *  read live in the CI wrapper, never here. `before` is the baseline
+ *  (origin/main); `after` is the proposed schedule (PR head / working tree). */
+export function diffPastDays(
+  before: readonly ResolvedPuzzle[],
+  after: readonly ResolvedPuzzle[],
+  today: string,
+): PastDayViolation[] {
+  if (!DATE_RE.test(today)) throw new Error(`Invalid "today" date "${today}" (want YYYY-MM-DD)`);
+  const afterBySlug = new Map(after.map((p) => [p.slug, p]));
+  const violations: PastDayViolation[] = [];
+  for (const b of before) {
+    if (b.date > today) continue; // not yet released — free to move
+    const a = afterBySlug.get(b.slug);
+    if (!a) {
+      violations.push({ slug: b.slug, before: { day: b.day, date: b.date }, after: null, reason: 'removed' });
+    } else if (a.date !== b.date) {
+      violations.push({ slug: b.slug, before: { day: b.day, date: b.date }, after: { day: a.day, date: a.date }, reason: 'redated' });
+    } else if (a.day !== b.day) {
+      violations.push({ slug: b.slug, before: { day: b.day, date: b.date }, after: { day: a.day, date: a.date }, reason: 'renumbered' });
+    }
+  }
+  return violations;
+}
