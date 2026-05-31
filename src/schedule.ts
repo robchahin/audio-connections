@@ -6,10 +6,7 @@
  *  decides ORDER. Day numbers and release dates are DERIVED here, never
  *  authored in puzzle files. `resolve()` is pure (no wall-clock, no I/O) so it
  *  reproduces identically on every build and is exhaustively unit-testable.
- *
- *  This module is intentionally not yet wired into the app loader (that is a
- *  later PR). It can be exercised in isolation via its tests and the eventual
- *  `schedule:preview` script.
+ *  The app loader (src/puzzles.ts) feeds this to `resolve()` at startup.
  */
 import type { PuzzleContent } from './types';
 
@@ -169,17 +166,9 @@ export function resolve(
   });
 }
 
-/** The live schedule.
- *
- *  PR1 seed: the legacy day-N ids in their current numeric order, as a
- *  placeholder so the module type-checks and the resolver has something real to
- *  chew on. The tangle fix (reorder 34/35/36, pin the held date) and the cutover
- *  to author slugs land in a later PR; until the loader is wired this array is
- *  not yet the source of truth for the running app. */
 /** The live schedule — the single source of truth for ORDER. The loader
  *  (puzzles.ts) feeds this to resolve() to derive each puzzle's number and
- *  date; the puzzle FILES no longer decide either (their still-embedded
- *  day/date/releaseAt are vestigial until the content-only PR strips them).
+ *  date; the puzzle FILES carry content only and decide neither.
  *
  *  Slugs are the file stems in src/puzzles/. Identity is the stem, not the
  *  number — a file's name is fixed for life while its display number is derived
