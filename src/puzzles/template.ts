@@ -2,13 +2,10 @@
 // Copy this file to src/puzzles/day-NN.ts, fill in the fields, then run
 // `npm run validate` to check your work before opening a PR.
 
-import type { Puzzle } from '../types';
+import type { PuzzleContent } from '../types';
 
-const puzzle: Puzzle = {
-  day: 1,
-  date: 'YYYY-MM-DD',
+const puzzle: PuzzleContent = {
   author: 'Name goes here',
-  releaseAt: 'YYYY-MM-DDT00:00:00Z',
   // constraint: 'All singing, all dancing',  // optional pill + DJ-note modal; keep it phrase-length (80 char soft cap)
   themes: [
     {

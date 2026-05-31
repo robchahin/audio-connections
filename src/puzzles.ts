@@ -1,5 +1,5 @@
-import type { Puzzle } from './types';
-import { LAUNCH_EPOCH, resolve, schedule, type PuzzleContent } from './schedule';
+import type { Puzzle, PuzzleContent } from './types';
+import { LAUNCH_EPOCH, resolve, schedule } from './schedule';
 
 class PuzzleSchemaError extends Error {}
 const fail = (source: string, msg: string): never => {
@@ -14,21 +14,15 @@ const fail = (source: string, msg: string): never => {
  *  pill on one line at 11px mono. */
 export const MAX_CONSTRAINT_LENGTH = 80;
 
-export function validatePuzzle(p: unknown, source: string): asserts p is Puzzle {
+/** Validate a puzzle FILE's exported content. Files carry no day/date/releaseAt
+ *  anymore — those are derived from src/schedule.ts — so this checks only the
+ *  authored half: author, optional constraint, and the 4×4 themes/tracks. */
+export function validatePuzzleContent(p: unknown, source: string): asserts p is PuzzleContent {
   if (!p || typeof p !== 'object') fail(source, 'not an object');
   const x = p as Record<string, unknown>;
 
-  if (typeof x.day !== 'number' || !Number.isInteger(x.day) || (x.day as number) < 1) {
-    fail(source, 'day must be a positive integer');
-  }
-  if (typeof x.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(x.date)) {
-    fail(source, 'date must be YYYY-MM-DD');
-  }
   if (typeof x.author !== 'string' || x.author.length === 0) {
     fail(source, 'author must be a non-empty string');
-  }
-  if (typeof x.releaseAt !== 'string' || x.releaseAt.length === 0) {
-    fail(source, 'releaseAt must be a non-empty string');
   }
   if (x.constraint !== undefined) {
     if (typeof x.constraint !== 'string' || x.constraint.length === 0) {
@@ -85,16 +79,14 @@ function slugFromPath(path: string): string {
 
 const modules = import.meta.glob<{ default: unknown }>('./puzzles/day-*.ts', { eager: true });
 
-// Build the content map keyed by slug. validatePuzzle still runs (the files
-// continue to carry day/date/releaseAt for now), but those fields are no longer
-// READ for numbering — resolve() owns number + date. Only the content half is kept.
+// Build the content map keyed by slug. Files now export PuzzleContent directly
+// (no day/date/releaseAt); resolve() owns number + date.
 const contentBySlug = new Map<string, PuzzleContent>();
 for (const [path, mod] of Object.entries(modules)) {
-  validatePuzzle(mod.default, path);
+  validatePuzzleContent(mod.default, path);
   const slug = slugFromPath(path);
   if (contentBySlug.has(slug)) throw new Error(`Duplicate puzzle slug "${slug}" (${path})`);
-  const p = mod.default;
-  contentBySlug.set(slug, { author: p.author, constraint: p.constraint, themes: p.themes });
+  contentBySlug.set(slug, mod.default);
 }
 
 // Every file must be scheduled and vice-versa. Catches a new file nobody added

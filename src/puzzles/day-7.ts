@@ -1,10 +1,7 @@
-import type { Puzzle } from '../types';
+import type { PuzzleContent } from '../types';
 
-const puzzle: Puzzle = {
-  day: 7,
-  date: '2026-05-16',
+const puzzle: PuzzleContent = {
   author: 'Corey Farwell',
-  releaseAt: '2026-05-16T00:00:00Z',
   themes: [
     {
       theme: 'Songs about a US state',
