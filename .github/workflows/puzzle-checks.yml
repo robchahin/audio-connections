@@ -14,8 +14,8 @@ name: Puzzle PR checks
 #   the job with an error or run it unguarded depending on org defaults —
 #   configure it before relying on the gate.
 #
-# Post-merge validation lives in deploy.yml's `test` job, which already runs
-# `npm run test:itunes` on every push to main.
+# Post-merge validation lives in itunes-postmerge.yml, which re-runs
+# `npm run test:itunes` on pushes to main that touch a puzzle file.
 
 on:
   pull_request:

@@ -17,6 +17,10 @@
 
 ### How puzzles are authored today
 
+> **Historical (describes the pre-ADR state this decision replaced).** This is
+> the model as it was before this ADR shipped; for current authoring see
+> PUZZLE_AUTHORS.md.
+
 Each puzzle is one file, `src/puzzles/day-N.ts`, exporting a `Puzzle`:
 
 ```ts
@@ -411,6 +415,12 @@ reslug set against a future cutover date, not this snapshot.**
 12. Frontier runway warning + backlog-depth surfacing in CI.
 
 ### Worked result for the current tangle
+
+> **Illustrative (pre-implementation projection).** The slugs and day numbers
+> below were placeholders from design time, when the cutover day was still TBD.
+> What actually shipped reslugs days 23–36 (e.g. `bojanrajkovic-1`, not
+> `bojan-1`); see `src/schedule.ts` for the live schedule and numbers. The
+> mechanics the table demonstrates are unchanged.
 
 Schedule tail `[farana-1, farana-2, tqbf-1, bojan-1, <pr37-slug>, <pr39-slug>,
 {tqbf-2, 2026-06-30}]` resolves to (slugs are the authors' own counters, not the

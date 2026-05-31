@@ -6,7 +6,7 @@ You don't need to be a developer to contribute a puzzle. This guide walks throug
 
 A puzzle is **4 themed categories of 4 songs each** (16 songs total). Players hear 30-second previews and group the songs into the four hidden themes.
 
-Each puzzle lives in its own file: `src/puzzles/day-NN.ts`.
+Each puzzle lives in its own file under `src/puzzles/`, named for you: `src/puzzles/<your-github-handle>-N.ts` (e.g. `name-1.ts`, then `name-2.ts` for your second). The handle isn't really important, filenames just need to be unique, and this naming convention means you only need to know about other files you've submitted, not everyone else's.
 
 ## Setup (one-time)
 
@@ -21,14 +21,15 @@ Each puzzle lives in its own file: `src/puzzles/day-NN.ts`.
 
 ## Writing your puzzle
 
-1. Find the next free day number by looking at `src/puzzles/` — the highest `day-N.ts` plus one.
-2. Copy `src/puzzles/template.ts` to `src/puzzles/day-NN.ts` (replace `NN` with your number).
-3. Fill in:
-   - **`day`**: your day number.
-   - **`date`** and **`releaseAt`**: the date the puzzle should unlock. Ask a maintainer if you're not sure how to pick this.
+1. Copy `src/puzzles/template.ts` to `src/puzzles/<your-github-handle>-N.ts`.
+2. Fill in:
    - **`author`**: your name.
    - **`themes`**: four themes, each with four tracks.
-   - **`constraint`** *(optional)*: a puzzle-wide rule that pops as a "DJ left a note" modal on every day-load, plus a pill in the desktop heading. Use for meta-themes that apply to every track (e.g. `"All singing, all dancing"`, `"Only #1 hits"`). Tells players upfront that an extra constraint is in play. **Keep it phrase-length** — there's an 80-character soft cap enforced by the validator. Long enough for a full sentence won't fit the vibe.
+   - **`constraint`** *(optional)*: a puzzle-wide rule that pops as a "DJ left a note" popup when your puzzle loads, and a pill in the desktop heading. Use for meta-themes that apply to every track, but use sparingly. Tells players upfront that an extra constraint is in play. **Keep it phrase-length** — there's an 80-character soft cap enforced by the validator. Long enough for a full sentence won't fit the vibe.
+
+## Scheduling your puzzle
+
+The puzzle file holds **only the puzzle content** - the day number and release date aren't in it. A maintainer slots your puzzle into the schedule (`src/schedule.ts`) when they merge it. This makes maintainers responsible for managing duplicates and collisions so you can focus on the puzzle. If you'd like your puzzle to land on a particular date (a birthday, a holiday tie-in), just say so in your PR and the maintainer can pin it.
 
 ### Finding iTunes IDs
 

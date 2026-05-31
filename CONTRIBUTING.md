@@ -5,7 +5,7 @@ For puzzle submissions, see [PUZZLE_AUTHORS.md](./PUZZLE_AUTHORS.md). This doc i
 ## Project structure
 
 - `src/` — application code (React + TypeScript, built with Vite).
-- `src/puzzles/` — one TypeScript file per daily puzzle.
+- `src/puzzles/` — one TypeScript file per puzzle, content only, named for its author (see PUZZLE_AUTHORS.md). Day numbers and dates are derived from `src/schedule.ts`, not stored in the files.
 - `tests/` — Playwright end-to-end tests.
 - `vite-plugins/`, `public/`, `icons/` — build assets.
 - `.github/workflows/` — CI definitions.
@@ -41,10 +41,10 @@ Files are routed to a runner by filename suffix and directory; see `vitest.confi
 
 | Trigger | Runs |
 |---|---|
-| PR opened that touches `src/puzzles/day-*.ts` | `test:unit` + `test:itunes` (after maintainer approves the environment gate) |
+| PR opened that touches a puzzle file (`src/puzzles/*.ts` except `template.ts`) | `test:unit` + `test:itunes` (after maintainer approves the environment gate) |
 | PR opened that touches anything else | Nothing automated |
 | Push to `main` | `test:unit` + Playwright + build + deploy |
-| Push to `main` touching `src/puzzles/day-*.ts` | Above + `test:itunes` post-merge sweep |
+| Push to `main` touching a puzzle file (`src/puzzles/*.ts` except `template.ts`) | Above + `test:itunes` post-merge sweep |
 
 The "PR opened touching anything else → nothing" row is the gap. **If you're touching site code, run tests locally before merging.**
 
