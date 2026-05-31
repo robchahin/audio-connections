@@ -34,15 +34,21 @@ describe('every puzzle has the required shape', () => {
 });
 
 describe('puzzle calendar', () => {
-  // File stems are kebab-case slugs: the released back-catalogue is `day-N`,
-  // newer puzzles use author slugs (`<github-handle>-N`). Both are lowercase
-  // letters/digits joined by hyphens — this catches stray or mis-cased files.
-  const SLUG_FILE_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*\.ts$/;
+  // File stems are slugs: the released back-catalogue is `day-N`, newer puzzles
+  // use author slugs (`<github-handle>-N`). Alphanumerics joined by single
+  // hyphens, no leading/trailing/doubled hyphen — same shape as a GitHub handle,
+  // case allowed since handles can be mixed-case. This catches stray files
+  // (`.DS_Store`, backups) and malformed names like `my puzzle.ts` or `foo_1.ts`.
+  const SLUG_FILE_RE = /^[a-zA-Z0-9]+(?:-[a-zA-Z0-9]+)*\.ts$/;
 
-  it('every file in src/puzzles/ is a kebab-case slug', () => {
+  it('every file in src/puzzles/ is a valid slug filename', () => {
     const files = readdirSync(puzzleDir).filter((f) => f !== 'template.ts');
     for (const f of files) {
-      expect(f, `unexpected file in src/puzzles/: ${f}`).toMatch(SLUG_FILE_RE);
+      expect(
+        f,
+        `"${f}" isn't a valid puzzle filename. Use letters, digits and single ` +
+          `hyphens, ending in .ts (e.g. your-handle-1.ts) — see PUZZLE_AUTHORS.md.`,
+      ).toMatch(SLUG_FILE_RE);
     }
   });
 

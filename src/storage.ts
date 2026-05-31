@@ -36,7 +36,17 @@ function key(id: string): string {
 /** Identity a persisted record claims. Prefers the explicit `id`; falls back to
  *  the numeric `day` for records written before the string-id migration. For a
  *  legacy `day-N` puzzle the id IS `String(day)`, so a pre-migration save and a
- *  current one resolve to the same identity and the same key. */
+ *  current one resolve to the same identity and the same key.
+ *
+ *  Retiring the `?? String(...day)` shim: this fallback (and its mirrors in
+ *  dayState.ts, backup.ts and hooks/usePuzzleSession.ts) exists only to keep
+ *  reading saves written before the string-id migration. To drop it, make `id`
+ *  required on PersistedGameState — the compiler then points at every fallback
+ *  site to delete. Note this is a DELETION, not a no-op: any save not rewritten
+ *  since before the migration (no `id` field) becomes unreadable, so only do it
+ *  once you're willing to discard those. The `day` dual-write in saveState is
+ *  NOT part of this shim — it stays permanently (it's free, and doubles as a
+ *  debug aid and the cross-day-contamination guard below). */
 function savedId(parsed: PersistedGameState): string {
   return parsed.id ?? String(parsed.day);
 }
