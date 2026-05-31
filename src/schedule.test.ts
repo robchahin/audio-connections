@@ -185,11 +185,20 @@ describe('resolve — golden master (frozen released prefix)', () => {
   });
 });
 
-describe('the live schedule resolves the current catalogue correctly', () => {
+describe('the live schedule resolves the current catalogue', () => {
   // Resolve the REAL schedule against synthetic content (one stub per scheduled
-  // slug) so this pins the schedule's number/date output independent of puzzle
-  // file contents. It is the migration's source of truth for what each file
-  // resolves to.
+  // slug) so these checks pin the schedule's STRUCTURE independent of puzzle
+  // file contents. Every assertion below holds for a schedule of ANY length, so
+  // appending a puzzle needs NO edits here — that is the point. (Counting
+  // entries or freezing a per-row table would force a hand-edit on every add,
+  // and would also wrongly freeze the still-movable unreleased tail.)
+  //
+  // What deliberately is NOT here: a guard that a PAST day wasn't renamed or
+  // renumbered. That question depends on "today" and on the previous schedule,
+  // so it can't live in a pure, deterministic unit test without reading the
+  // wall clock (a self-detonating, unbisectable test). It lives in CI instead,
+  // where reading the clock + diffing against origin/main is legitimate — see
+  // the past-day guard. Here we assert only timeless structural invariants.
   const stub = new Map<string, PuzzleContent>(
     liveSchedule.map((e) => {
       const slug = typeof e === 'string' ? e : e.slug;
@@ -198,55 +207,46 @@ describe('the live schedule resolves the current catalogue correctly', () => {
   );
   const out = resolve(liveSchedule, stub, LAUNCH_EPOCH);
 
-  it('covers all 36 catalogue days, dense 1..36, chronological', () => {
-    expect(out).toHaveLength(36);
+  it('numbers densely 1..N in chronological order', () => {
     out.forEach((p, i) => expect(p.day).toBe(i + 1));
     for (let i = 1; i < out.length; i++) {
       expect(out[i]!.date >= out[i - 1]!.date).toBe(true);
     }
   });
 
-  // Frozen save-key snapshot — the orphaned-saves guard. A puzzle's SAVE KEY is
-  // idFromSlug(slug), and it must NEVER change once players can have saved under
-  // it. Days 1..22 are released `day-N` files whose keys are the bare numbers
-  // '1'..'22' that live saves sit under, so their files must never be renamed.
-  // The reslugged tail (days 23..36) freezes each author slug as its now-
-  // permanent key. Renaming any file, reordering the schedule, or shifting a pin
-  // breaks this table loudly. Columns: [day, slug, saveKey, date].
-  const FROZEN: ReadonlyArray<readonly [number, string, string, string]> = [
-    ...Array.from({ length: 22 }, (_, i): readonly [number, string, string, string] => {
-      const n = i + 1;
-      const date = new Date(Date.UTC(2026, 4, 10) + i * 86_400_000).toISOString().slice(0, 10);
-      return [n, `day-${n}`, String(n), date];
-    }),
-    [23, 'bojanrajkovic-1', 'bojanrajkovic-1', '2026-06-01'],
-    [24, 'klobucar-1', 'klobucar-1', '2026-06-02'],
-    [25, 'farana-1', 'farana-1', '2026-06-03'],
-    [26, 'rob-tetrel-1', 'rob-tetrel-1', '2026-06-04'],
-    [27, 'robchahin-1', 'robchahin-1', '2026-06-05'],
-    [28, 'klobucar-2', 'klobucar-2', '2026-06-06'],
-    [29, 'gitblight1-1', 'gitblight1-1', '2026-06-07'],
-    [30, 'rob-tetrel-2', 'rob-tetrel-2', '2026-06-08'],
-    [31, 'bojanrajkovic-2', 'bojanrajkovic-2', '2026-06-09'],
-    [32, 'klobucar-3', 'klobucar-3', '2026-06-10'],
-    [33, 'farana-2', 'farana-2', '2026-06-11'],
-    [34, 'farana-3', 'farana-3', '2026-06-12'],
-    [35, 'tqbf-1', 'tqbf-1', '2026-06-13'],
-    [36, 'tqbf-2', 'tqbf-2', '2026-06-30'], // held pin → dated last
-  ];
-
-  it('matches the frozen save-key snapshot (day, slug, save key, date)', () => {
-    expect(out.map((p) => [p.day, p.slug, idFromSlug(p.slug), p.date])).toEqual(
-      FROZEN.map((r) => [...r]),
-    );
+  it('assigns every puzzle a unique save key', () => {
+    const keys = out.map((p) => idFromSlug(p.slug));
+    expect(new Set(keys).size).toBe(keys.length);
   });
 
-  it('every released day (1..22) keeps a stable numeric save key', () => {
-    for (const [day, slug] of FROZEN) {
-      if (day <= 22) {
-        expect([slug, idFromSlug(slug)], `released day ${day}`).toEqual([`day-${day}`, String(day)]);
-      }
+  // The orphaned-saves guard for the released back-catalogue. Each legacy
+  // `day-N` file is a puzzle that shipped before the slug migration, so live
+  // players hold saves under the bare numeric key 'N'. That key is
+  // idFromSlug('day-N'), and the puzzle's public number/date are also a matter
+  // of record. So every `day-N` entry MUST resolve to number N, the bare key
+  // 'N', and date epoch+(N-1) — reordering one (or shifting a pin ahead of it)
+  // breaks this loudly. Self-extending: it checks whatever day-N entries exist,
+  // with no count to bump. (A *rename* of a day-N file drops it from this set
+  // rather than failing here; that case is the CI past-day guard's job.)
+  it('freezes every legacy day-N entry to its numeric identity (number, save key, date)', () => {
+    const epochMs = Date.UTC(2026, 4, 10); // 2026-05-10, the launch epoch
+    let checked = 0;
+    for (const p of out) {
+      const m = /^day-(\d+)$/.exec(p.slug);
+      if (!m) continue;
+      const n = Number(m[1]);
+      const date = new Date(epochMs + (n - 1) * 86_400_000).toISOString().slice(0, 10);
+      expect([p.day, p.slug, idFromSlug(p.slug), p.date], `legacy ${p.slug}`).toEqual([
+        n,
+        `day-${n}`,
+        String(n),
+        date,
+      ]);
+      checked++;
     }
+    // Sanity: the released back-catalogue exists and is being checked, so this
+    // test can never silently pass by matching zero entries.
+    expect(checked).toBeGreaterThanOrEqual(22);
   });
 });
 
