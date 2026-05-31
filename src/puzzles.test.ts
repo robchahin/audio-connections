@@ -5,12 +5,12 @@ import {
   isReleased,
   latestReleasedIndex,
   puzzles,
-  validatePuzzle,
+  validatePuzzleContent,
 } from './puzzles';
 
 /** Minimal puzzle — isReleased only reads `day` and `releaseAt`. */
 function puzzle(day: number, releaseAt: string): Puzzle {
-  return { day, date: '2026-01-01', author: 'test', themes: [], releaseAt };
+  return { id: String(day), day, date: '2026-01-01', author: 'test', themes: [], releaseAt };
 }
 
 describe('isReleased', () => {
@@ -47,13 +47,10 @@ describe('latestReleasedIndex', () => {
   });
 });
 
-describe('validatePuzzle — constraint field', () => {
-  // Minimal valid puzzle shape; tests vary only the `constraint` field.
+describe('validatePuzzleContent — constraint field', () => {
+  // Minimal valid puzzle CONTENT; tests vary only the `constraint` field.
   const base = {
-    day: 1,
-    date: '2026-01-01',
     author: 'test',
-    releaseAt: '2026-01-01T00:00:00Z',
     themes: [
       { theme: 't1', tracks: [{ id: 1, artist: 'a', title: 't' }, { id: 2, artist: 'a', title: 't' }, { id: 3, artist: 'a', title: 't' }, { id: 4, artist: 'a', title: 't' }] },
       { theme: 't2', tracks: [{ id: 5, artist: 'a', title: 't' }, { id: 6, artist: 'a', title: 't' }, { id: 7, artist: 'a', title: 't' }, { id: 8, artist: 'a', title: 't' }] },
@@ -63,29 +60,29 @@ describe('validatePuzzle — constraint field', () => {
   };
 
   it('omitting constraint is fine — it is optional', () => {
-    expect(() => validatePuzzle(base, 'test')).not.toThrow();
+    expect(() => validatePuzzleContent(base, 'test')).not.toThrow();
   });
 
   it('accepts a constraint at exactly the max length', () => {
     const constraint = 'x'.repeat(MAX_CONSTRAINT_LENGTH);
-    expect(() => validatePuzzle({ ...base, constraint }, 'test')).not.toThrow();
+    expect(() => validatePuzzleContent({ ...base, constraint }, 'test')).not.toThrow();
   });
 
   it('rejects a constraint one char over the limit, naming the limit in the error', () => {
     const constraint = 'x'.repeat(MAX_CONSTRAINT_LENGTH + 1);
-    expect(() => validatePuzzle({ ...base, constraint }, 'day-N.ts')).toThrow(
+    expect(() => validatePuzzleContent({ ...base, constraint }, 'day-N.ts')).toThrow(
       new RegExp(`constraint is \\d+ chars; soft cap is ${MAX_CONSTRAINT_LENGTH}`),
     );
   });
 
   it('rejects an empty-string constraint (use omission instead)', () => {
-    expect(() => validatePuzzle({ ...base, constraint: '' }, 'test')).toThrow(
+    expect(() => validatePuzzleContent({ ...base, constraint: '' }, 'test')).toThrow(
       /constraint must be a non-empty string/,
     );
   });
 
   it('rejects a non-string constraint', () => {
-    expect(() => validatePuzzle({ ...base, constraint: 42 }, 'test')).toThrow(
+    expect(() => validatePuzzleContent({ ...base, constraint: 42 }, 'test')).toThrow(
       /constraint must be a non-empty string/,
     );
   });

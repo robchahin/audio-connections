@@ -46,6 +46,7 @@ describe('deriveDayState', () => {
 
   // releaseAt in the past so isReleased() resolves true against the real clock.
   const released: Puzzle = {
+    id: '3',
     day: 3,
     date: '2020-01-01',
     author: 'test',
@@ -54,7 +55,7 @@ describe('deriveDayState', () => {
   };
 
   it('pulls groupsSolved and mistakes from the persisted save', () => {
-    saveState(3, {
+    saveState('3', 3, {
       selected: [],
       solvedThemes: [0, 1],
       notes: [],
@@ -79,6 +80,7 @@ describe('deriveDayState', () => {
 describe('pickInitialDayIndex', () => {
   // pickInitialDayIndex only reads `day` and array order off each puzzle.
   const puzzles: Puzzle[] = [1, 2, 3].map((day) => ({
+    id: String(day),
     day,
     date: '2026-01-01',
     author: 'test',

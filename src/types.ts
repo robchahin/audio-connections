@@ -10,11 +10,12 @@ export interface Theme {
   tracks: RawTrack[];
 }
 
-export interface Puzzle {
-  day: number;
-  date: string;
+/** Everything a puzzle FILE owns — the authored content, and nothing about
+ *  scheduling. A `src/puzzles/<slug>.ts` exports exactly this. The day number,
+ *  date and releaseAt are NOT here: they're derived from `src/schedule.ts` by
+ *  resolve() (see docs/adr/0001-derived-day-scheduling.md). */
+export interface PuzzleContent {
   author: string;
-  releaseAt: string;
   /** Optional puzzle-wide constraint surfaced via the "DJ left a note"
    *  modal on day-load (plus a desktop heading pill). Use for meta-themes
    *  that apply to every track — e.g. "All singing, all dancing" or
@@ -22,6 +23,22 @@ export interface Puzzle {
    *  puzzles.ts (currently 80 chars) — a taste cap, not a layout one. */
   constraint?: string;
   themes: Theme[];
+}
+
+/** A puzzle once the schedule has placed it in time: authored content plus the
+ *  derived identity/number/date. This is the shape the app consumes; puzzle
+ *  files themselves are only `PuzzleContent`. */
+export interface Puzzle extends PuzzleContent {
+  /** Stable identity / localStorage save key. Derived from the file slug:
+   *  a legacy `day-N.ts` file yields the bare number string (`"21"`) so its
+   *  save key stays byte-identical to the pre-derivation scheme; an authored
+   *  slug file (`tqbf-1.ts`) yields the slug itself. Unlike `day` (a derived,
+   *  reorderable display number) this never changes once assigned, which is
+   *  why saves key off it. */
+  id: string;
+  day: number;
+  date: string;
+  releaseAt: string;
 }
 
 export interface LoadedTrack {

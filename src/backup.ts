@@ -18,7 +18,7 @@ const DAY_KEY_PREFIX = 'audio-connections:day:';
 export function collectBackup(): PerDayRecord[] {
   const records: PerDayRecord[] = [];
   for (const puzzle of puzzles) {
-    const state = loadState(puzzle.day);
+    const state = loadState(puzzle.id ?? String(puzzle.day));
     if (!state || !state.gameOver) continue;
     records.push(stateToRecord(state));
   }
@@ -31,7 +31,7 @@ export function collectBackup(): PerDayRecord[] {
 export function applyBackup(records: PerDayRecord[]): void {
   if (typeof localStorage === 'undefined') return;
 
-  for (const puzzle of puzzles) clearState(puzzle.day);
+  for (const puzzle of puzzles) clearState(puzzle.id ?? String(puzzle.day));
 
   for (const record of records) {
     const puzzle = puzzles.find((p) => p.day === record.day);
@@ -42,7 +42,7 @@ export function applyBackup(records: PerDayRecord[]): void {
     // assigns LoadedTrack.id (id = i in the flattened theme×track list).
     const trackCount = puzzle.themes.reduce((sum, t) => sum + t.tracks.length, 0);
     const trackOrder = Array.from({ length: trackCount }, (_, i) => i);
-    saveState(record.day, materializeRecord(record, trackOrder));
+    saveState(puzzle.id ?? String(puzzle.day), puzzle.day, materializeRecord(record, trackOrder));
   }
 }
 
@@ -77,7 +77,7 @@ function stateToRecord(state: PersistedGameState): PerDayRecord {
 function materializeRecord(
   record: PerDayRecord,
   trackOrder: number[],
-): Omit<PersistedGameState, '__v' | 'day'> {
+): Omit<PersistedGameState, '__v' | 'id' | 'day'> {
   const history: TransferGuess[] = record.guessHistory ?? [];
   const mistakes = record.guessHistory
     ? history.filter((g) => !g.correct).length

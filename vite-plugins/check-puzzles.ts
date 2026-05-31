@@ -1,67 +1,54 @@
 // Dev-time puzzle checks that run in Vite's Node process.
 //
-// Runs at build start and on day-file changes during dev. Emits warnings
+// Runs at build start and on puzzle-file changes during dev. Emits warnings
 // (via the dev server logger) when the same iTunes id appears in two puzzles
-// within `warnDays` days of each other — surfaced in the terminal where
-// Vite is running, not in the browser console.
+// within `warnDays` days of each other — surfaced in the terminal where Vite
+// is running, not in the browser console.
 //
-// Reads files with a focused regex rather than importing them; the day-N.ts
-// format is regular enough that this avoids a TS-in-Node loader.
+// Puzzle files are content-only (no day/date — those are derived from
+// src/schedule.ts), so this reads each file's track ids with a focused regex
+// and gets the scheduled day/date from the proximity helper. Using a regex for
+// the ids avoids standing up a TS-in-Node loader just to import the modules;
+// the date math and reuse detection live in src/puzzles.proximity.ts so they
+// can be unit-tested without Vite.
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Plugin } from 'vite';
+import { findProximityWarnings, scheduledDates } from '../src/puzzles.proximity';
 
 interface Options {
   /** Warn if the same iTunes id appears in two puzzles within this many days. */
   warnDays?: number;
-  /** Directory holding day-N.ts files, relative to the repo root. */
+  /** Directory holding the puzzle files, relative to the repo root. */
   dir?: string;
 }
 
-interface Occurrence {
-  day: number;
-  date: string;
-  file: string;
-}
+// Same shape as the filename guard in src/puzzles.data.test.ts: a slug is
+// alphanumerics joined by single hyphens. Excludes template.ts and stray files.
+const PUZZLE_FILE_RE = /^[a-zA-Z0-9]+(?:-[a-zA-Z0-9]+)*\.ts$/;
 
-function collect(dir: string): Map<number, Occurrence[]> {
-  const byId = new Map<number, Occurrence[]>();
-  const files = readdirSync(dir).filter((f) => /^day-\d+\.ts$/.test(f));
+/** Map each puzzle slug to the iTunes ids it uses, read straight from the file. */
+function idsBySlug(dir: string): Map<string, number[]> {
+  const out = new Map<string, number[]>();
+  const files = readdirSync(dir).filter((f) => f !== 'template.ts' && PUZZLE_FILE_RE.test(f));
   for (const f of files) {
     const content = readFileSync(join(dir, f), 'utf8');
-    const dayMatch = /\bday:\s*(\d+)/.exec(content);
-    const dateMatch = /\bdate:\s*['"](\d{4}-\d{2}-\d{2})['"]/.exec(content);
-    if (!dayMatch || !dateMatch) continue;
-    const day = parseInt(dayMatch[1]!, 10);
-    const date = dateMatch[1]!;
+    const ids: number[] = [];
     const idRegex = /\bid:\s*(\d+)/g;
     let m: RegExpExecArray | null;
-    while ((m = idRegex.exec(content)) !== null) {
-      const id = parseInt(m[1]!, 10);
-      const list = byId.get(id) ?? [];
-      list.push({ day, date, file: f });
-      byId.set(id, list);
-    }
+    while ((m = idRegex.exec(content)) !== null) ids.push(parseInt(m[1]!, 10));
+    out.set(f.replace(/\.ts$/, ''), ids);
   }
-  return byId;
+  return out;
 }
 
-function reportProximity(byId: Map<number, Occurrence[]>, warnDays: number, warn: (msg: string) => void): void {
-  for (const [id, list] of byId) {
-    if (list.length < 2) continue;
-    list.sort((a, b) => a.date.localeCompare(b.date));
-    for (let i = 1; i < list.length; i++) {
-      const prev = list[i - 1]!;
-      const cur = list[i]!;
-      const gap = Math.round(
-        (new Date(cur.date).getTime() - new Date(prev.date).getTime()) / 86_400_000,
-      );
-      if (gap < warnDays) {
-        warn(
-          `iTunes id ${id} reused: Day ${prev.day} (${prev.date}) → Day ${cur.day} (${cur.date}), ${gap} day(s) apart`,
-        );
-      }
-    }
+function run(dir: string, warnDays: number, warn: (msg: string) => void): void {
+  const warnings = findProximityWarnings(idsBySlug(dir), scheduledDates(), warnDays);
+  for (const w of warnings) {
+    warn(
+      `iTunes id ${w.id} reused: Day ${w.prev.day} (${w.prev.date}) → ` +
+        `Day ${w.cur.day} (${w.cur.date}), ${w.gap} day(s) apart`,
+    );
   }
 }
 
@@ -72,16 +59,12 @@ export function checkPuzzles(opts: Options = {}): Plugin {
   return {
     name: 'check-puzzles',
     buildStart() {
-      const byId = collect(dir);
-      reportProximity(byId, warnDays, (msg) => this.warn(msg));
+      run(dir, warnDays, (msg) => this.warn(msg));
     },
     configureServer(server) {
       const onChange = (path: string): void => {
-        if (!/\/puzzles\/day-\d+\.ts$/.test(path)) return;
-        const byId = collect(dir);
-        reportProximity(byId, warnDays, (msg) =>
-          server.config.logger.warn(`[check-puzzles] ${msg}`),
-        );
+        if (!/\/puzzles\/[^/]+\.ts$/.test(path) || /\/template\.ts$/.test(path)) return;
+        run(dir, warnDays, (msg) => server.config.logger.warn(`[check-puzzles] ${msg}`));
       };
       server.watcher.on('add', onChange);
       server.watcher.on('change', onChange);

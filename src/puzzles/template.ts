@@ -1,14 +1,13 @@
 // New here? See PUZZLE_AUTHORS.md at the repo root for the full guide.
-// Copy this file to src/puzzles/day-NN.ts, fill in the fields, then run
-// `npm run validate` to check your work before opening a PR.
+// Copy this file to src/puzzles/<your-github-handle>-N.ts,
+// fill in the fields, then run `npm run validate` to check your work before
+// opening a PR. The day number and release date aren't set here — a maintainer
+// schedules those in src/schedule.ts.
 
-import type { Puzzle } from '../types';
+import type { PuzzleContent } from '../types';
 
-const puzzle: Puzzle = {
-  day: 1,
-  date: 'YYYY-MM-DD',
+const puzzle: PuzzleContent = {
   author: 'Name goes here',
-  releaseAt: 'YYYY-MM-DDT00:00:00Z',
   // constraint: 'All singing, all dancing',  // optional pill + DJ-note modal; keep it phrase-length (80 char soft cap)
   themes: [
     {

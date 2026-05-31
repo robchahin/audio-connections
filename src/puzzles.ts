@@ -1,4 +1,10 @@
-import type { Puzzle } from './types';
+import type { Puzzle, PuzzleContent } from './types';
+import { LAUNCH_EPOCH, idFromSlug, resolve, schedule } from './schedule';
+
+// idFromSlug is the slug→save-key derivation; it lives in schedule.ts (pure,
+// loader-free) so the schedule tests can assert save-key stability. Re-exported
+// here because callers historically imported it from the puzzles module.
+export { idFromSlug } from './schedule';
 
 class PuzzleSchemaError extends Error {}
 const fail = (source: string, msg: string): never => {
@@ -13,21 +19,15 @@ const fail = (source: string, msg: string): never => {
  *  pill on one line at 11px mono. */
 export const MAX_CONSTRAINT_LENGTH = 80;
 
-export function validatePuzzle(p: unknown, source: string): asserts p is Puzzle {
+/** Validate a puzzle FILE's exported content. Files carry no day/date/releaseAt
+ *  anymore — those are derived from src/schedule.ts — so this checks only the
+ *  authored half: author, optional constraint, and the 4×4 themes/tracks. */
+export function validatePuzzleContent(p: unknown, source: string): asserts p is PuzzleContent {
   if (!p || typeof p !== 'object') fail(source, 'not an object');
   const x = p as Record<string, unknown>;
 
-  if (typeof x.day !== 'number' || !Number.isInteger(x.day) || (x.day as number) < 1) {
-    fail(source, 'day must be a positive integer');
-  }
-  if (typeof x.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(x.date)) {
-    fail(source, 'date must be YYYY-MM-DD');
-  }
   if (typeof x.author !== 'string' || x.author.length === 0) {
     fail(source, 'author must be a non-empty string');
-  }
-  if (typeof x.releaseAt !== 'string' || x.releaseAt.length === 0) {
-    fail(source, 'releaseAt must be a non-empty string');
   }
   if (x.constraint !== undefined) {
     if (typeof x.constraint !== 'string' || x.constraint.length === 0) {
@@ -74,33 +74,54 @@ export function validatePuzzle(p: unknown, source: string): asserts p is Puzzle 
   }
 }
 
-function dayNumberFromPath(path: string): number {
-  const m = /\/day-(\d+)\.ts$/.exec(path);
-  if (!m) throw new Error(`File outside the day-N.ts naming convention: ${path}`);
-  return parseInt(m[1]!, 10);
+/** Map a puzzle file path to its slug (the file stem). Identity, not number —
+ *  `./puzzles/day-22.ts` → `day-22`, `./puzzles/tqbf-1.ts` → `tqbf-1`. */
+function slugFromPath(path: string): string {
+  const m = /\/([^/]+)\.ts$/.exec(path);
+  if (!m) throw new Error(`Unexpected puzzle path: ${path}`);
+  return m[1]!;
 }
 
-const modules = import.meta.glob<{ default: unknown }>('./puzzles/day-*.ts', { eager: true });
+// Every puzzle file, by stem — released back-catalogue is `day-N`, newer
+// puzzles use author slugs, so we glob all of src/puzzles/ and exclude only the
+// non-puzzle template. The slug IS the file stem (see slugFromPath).
+const modules = import.meta.glob<{ default: unknown }>(
+  ['./puzzles/*.ts', '!./puzzles/template.ts'],
+  { eager: true },
+);
 
-const collected: Puzzle[] = [];
-const seenDays = new Set<number>();
+// Build the content map keyed by slug. Files now export PuzzleContent directly
+// (no day/date/releaseAt); resolve() owns number + date.
+const contentBySlug = new Map<string, PuzzleContent>();
 for (const [path, mod] of Object.entries(modules)) {
-  const expectedDay = dayNumberFromPath(path);
-  validatePuzzle(mod.default, path);
-  if (mod.default.day !== expectedDay) {
-    throw new Error(
-      `${path}: filename says day ${expectedDay} but module exports day ${mod.default.day}`,
-    );
-  }
-  if (seenDays.has(mod.default.day)) {
-    throw new Error(`Duplicate day number ${mod.default.day} (last seen in ${path})`);
-  }
-  seenDays.add(mod.default.day);
-  collected.push(mod.default);
+  validatePuzzleContent(mod.default, path);
+  const slug = slugFromPath(path);
+  if (contentBySlug.has(slug)) throw new Error(`Duplicate puzzle slug "${slug}" (${path})`);
+  contentBySlug.set(slug, mod.default);
 }
-collected.sort((a, b) => a.day - b.day);
 
-export const puzzles: Puzzle[] = collected;
+// Every file must be scheduled and vice-versa. Catches a new file nobody added
+// to the schedule (it would otherwise be silently invisible); resolve() throws
+// for the reverse (a scheduled slug with no file).
+const scheduledSlugs = new Set(schedule.map((e) => (typeof e === 'string' ? e : e.slug)));
+for (const slug of contentBySlug.keys()) {
+  if (!scheduledSlugs.has(slug)) {
+    throw new Error(`Puzzle file "${slug}.ts" exists but is not in the schedule (src/schedule.ts)`);
+  }
+}
+
+// Derive number + date for every scheduled puzzle, then project back onto the
+// downstream Puzzle shape so nothing else in the app changes yet.
+const resolved = resolve(schedule, contentBySlug, LAUNCH_EPOCH);
+export const puzzles: Puzzle[] = resolved.map((r) => ({
+  id: idFromSlug(r.slug),
+  day: r.day,
+  date: r.date,
+  releaseAt: r.releaseAt,
+  author: r.content.author,
+  ...(r.content.constraint !== undefined ? { constraint: r.content.constraint } : {}),
+  themes: r.content.themes,
+}));
 export const MAX_MISTAKES = 4;
 export const THEME_EMOJI = ['🟨', '🟩', '🟦', '🟪'] as const;
 

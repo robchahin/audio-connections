@@ -5,7 +5,7 @@ import { puzzles } from './puzzles';
 // to a playable song track — catches a collectionId pasted in place of a
 // trackId. Lives in its own file (and runs via its own npm script and
 // workflow) so a path-filtered GitHub Action can fire it whenever a push
-// touches src/puzzles/day-*.ts; the default `npm run test:unit` skips it.
+// touches a puzzle file (src/puzzles/*.ts); the default `npm run test:unit` skips it.
 
 interface ITunesResult {
   wrapperType?: string;

@@ -28,6 +28,7 @@ function freshSession(): SessionState {
   return reducer(initialSession(4, ''), {
     type: 'load-fresh',
     day: 1,
+    id: '1',
     themeCount: 4,
     tracks: tracks(),
     loadStatus: '',
@@ -82,6 +83,7 @@ describe('loading actions', () => {
     const s = reducer(initialSession(4, ''), {
       type: 'load-restore',
       day: 1,
+      id: '1',
       themeCount: 4,
       tracks: tracks(),
       persisted,

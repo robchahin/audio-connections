@@ -1,10 +1,7 @@
-import type { Puzzle } from '../types';
+import type { PuzzleContent } from '../types';
 
-const puzzle: Puzzle = {
-  day: 22,
-  date: '2026-05-31',
+const puzzle: PuzzleContent = {
   author: 'Rob Wood',
-  releaseAt: '2026-05-31T00:00:00Z',
   themes: [
     {
       theme: 'Bangers from the Sing movie soundrack',

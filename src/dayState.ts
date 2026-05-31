@@ -26,7 +26,7 @@ export function deriveDayState(
   unlockedDays: ReadonlySet<number>,
 ): DayState {
   const released = isReleased(p, { unlocked: unlockedDays });
-  const save = released ? loadState(p.day) : null;
+  const save = released ? loadState(p.id ?? String(p.day)) : null;
   const groupsSolved = save?.solvedThemes.length ?? 0;
   const mistakes = save?.mistakes ?? 0;
   const isTodayDay = p.day === todayDay;
