@@ -58,7 +58,13 @@ export async function gotoDayUnlocked(page: Page, day: number): Promise<void> {
   for (const key of KONAMI) await page.keyboard.press(key);
   await expect(page.getByTestId('status')).toContainText(/Konami/);
   await openPicker(page);
-  await page.getByTestId(`day-chip-${day}`).click();
+  // The unlock re-renders the picker to reveal the previously-hidden future
+  // chip; wait for it to settle before clicking so the click can't race the
+  // re-render (a load-sensitive flake under parallel runs).
+  const chip = page.getByTestId(`day-chip-${day}`);
+  await expect(chip).toBeVisible();
+  await expect(chip).toBeEnabled();
+  await chip.click();
   await expect(page.getByTestId('puzzle-heading')).toHaveText(`Audio Connections ${day}`);
   await expect(page.getByTestId('grid')).toBeVisible();
   await expect(page.locator('.tile')).toHaveCount(16);
