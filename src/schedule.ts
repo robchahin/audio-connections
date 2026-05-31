@@ -181,20 +181,35 @@ export function resolve(
  *  date; the puzzle FILES no longer decide either (their still-embedded
  *  day/date/releaseAt are vestigial until the content-only PR strips them).
  *
- *  Slugs are the file stems in src/puzzles/ (currently `day-N`). Identity is
- *  the stem, not the number — a file keeps the name `day-34` while resolving
- *  to a different display number.
+ *  Slugs are the file stems in src/puzzles/. Identity is the stem, not the
+ *  number — a file's name is fixed for life while its display number is derived
+ *  from list position. The released back-catalogue (days 1..22) keeps `day-N`
+ *  stems so their numeric save keys stay live; unreleased puzzles use author
+ *  slugs (`<github-handle>-N`), which become their save keys via idFromSlug.
+ *  NEVER rename a released day's file — it orphans every player's save.
  *
  *  Dates auto-flow as previous + 1 day from LAUNCH_EPOCH, so a contiguous run
- *  needs no dates at all. The only pin is the held Jun-30 date for `day-34`;
+ *  needs no dates at all. The only pin is the held Jun-30 date for `tqbf-2`;
  *  listing it LAST means its derived number (rank by date) also comes last,
- *  and the old day-34/35/36 inversion is unrepresentable. New puzzles append
+ *  and the old 34/35/36 inversion is unrepresentable. New puzzles append
  *  as bare entries. */
 export const schedule: ScheduleEntry[] = [
   'day-1', 'day-2', 'day-3', 'day-4', 'day-5', 'day-6', 'day-7', 'day-8',
   'day-9', 'day-10', 'day-11', 'day-12', 'day-13', 'day-14', 'day-15', 'day-16',
-  'day-17', 'day-18', 'day-19', 'day-20', 'day-21', 'day-22', 'day-23', 'day-24',
-  'day-25', 'day-26', 'day-27', 'day-28', 'day-29', 'day-30', 'day-31', 'day-32',
-  'day-33', 'day-35', 'day-36',
-  { slug: 'day-34', date: '2026-06-30' }, // held date — de-tangles the tail
+  'day-17', 'day-18', 'day-19', 'day-20', 'day-21', 'day-22',
+  'bojanrajkovic-1', 'klobucar-1', 'farana-1', 'rob-tetrel-1', 'robchahin-1',
+  'klobucar-2', 'gitblight1-1', 'rob-tetrel-2', 'bojanrajkovic-2', 'klobucar-3',
+  'farana-2', 'farana-3', 'tqbf-1',
+  { slug: 'tqbf-2', date: '2026-06-30' }, // held date — de-tangles the tail
 ];
+
+/** Save-key identity from a slug. A legacy `day-N` slug collapses to the bare
+ *  number string so existing saves (keyed `audio-connections:day:21`) keep
+ *  working untouched; any other slug is its own id. Exact `^day-N$` match only,
+ *  so an author handle that merely starts with "day" is never mistaken for a
+ *  legacy file. Lives here (not the loader) so it stays pure and the schedule
+ *  tests can assert save-key stability across a reslug. */
+export function idFromSlug(slug: string): string {
+  const m = /^day-(\d+)$/.exec(slug);
+  return m ? m[1]! : slug;
+}

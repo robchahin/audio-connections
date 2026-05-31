@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   LAUNCH_EPOCH,
+  idFromSlug,
   resolve,
   schedule as liveSchedule,
   type PuzzleContent,
@@ -196,12 +197,6 @@ describe('the live schedule resolves the current catalogue correctly', () => {
     }),
   );
   const out = resolve(liveSchedule, stub, LAUNCH_EPOCH);
-  const bySlug = new Map(out.map((p) => [p.slug, p]));
-  const at = (slug: string): readonly [number, string] => {
-    const p = bySlug.get(slug);
-    if (!p) throw new Error(`slug ${slug} not resolved`);
-    return [p.day, p.date];
-  };
 
   it('covers all 36 catalogue days, dense 1..36, chronological', () => {
     expect(out).toHaveLength(36);
@@ -211,18 +206,66 @@ describe('the live schedule resolves the current catalogue correctly', () => {
     }
   });
 
-  it('keeps the released prefix frozen (days 1, 21, 22, 31 on their real dates)', () => {
-    expect(at('day-1')).toEqual([1, '2026-05-10']);
-    expect(at('day-21')).toEqual([21, '2026-05-30']); // latest released as of now
-    expect(at('day-22')).toEqual([22, '2026-05-31']); // unlocks tonight (5pm PDT)
-    expect(at('day-31')).toEqual([31, '2026-06-09']);
+  // Frozen save-key snapshot — the orphaned-saves guard. A puzzle's SAVE KEY is
+  // idFromSlug(slug), and it must NEVER change once players can have saved under
+  // it. Days 1..22 are released `day-N` files whose keys are the bare numbers
+  // '1'..'22' that live saves sit under, so their files must never be renamed.
+  // The reslugged tail (days 23..36, PR5) freezes each author slug as its now-
+  // permanent key. Renaming any file, reordering the schedule, or shifting a pin
+  // breaks this table loudly. Columns: [day, slug, saveKey, date].
+  const FROZEN: ReadonlyArray<readonly [number, string, string, string]> = [
+    ...Array.from({ length: 22 }, (_, i): readonly [number, string, string, string] => {
+      const n = i + 1;
+      const date = new Date(Date.UTC(2026, 4, 10) + i * 86_400_000).toISOString().slice(0, 10);
+      return [n, `day-${n}`, String(n), date];
+    }),
+    [23, 'bojanrajkovic-1', 'bojanrajkovic-1', '2026-06-01'],
+    [24, 'klobucar-1', 'klobucar-1', '2026-06-02'],
+    [25, 'farana-1', 'farana-1', '2026-06-03'],
+    [26, 'rob-tetrel-1', 'rob-tetrel-1', '2026-06-04'],
+    [27, 'robchahin-1', 'robchahin-1', '2026-06-05'],
+    [28, 'klobucar-2', 'klobucar-2', '2026-06-06'],
+    [29, 'gitblight1-1', 'gitblight1-1', '2026-06-07'],
+    [30, 'rob-tetrel-2', 'rob-tetrel-2', '2026-06-08'],
+    [31, 'bojanrajkovic-2', 'bojanrajkovic-2', '2026-06-09'],
+    [32, 'klobucar-3', 'klobucar-3', '2026-06-10'],
+    [33, 'farana-2', 'farana-2', '2026-06-11'],
+    [34, 'farana-3', 'farana-3', '2026-06-12'], // file day-35 → #34
+    [35, 'tqbf-1', 'tqbf-1', '2026-06-13'], // file day-36 → #35
+    [36, 'tqbf-2', 'tqbf-2', '2026-06-30'], // file day-34 → #36 (held)
+  ];
+
+  it('matches the frozen save-key snapshot (day, slug, save key, date)', () => {
+    expect(out.map((p) => [p.day, p.slug, idFromSlug(p.slug), p.date])).toEqual(
+      FROZEN.map((r) => [...r]),
+    );
   });
 
-  it('de-tangles 34/35/36 and re-flows the tail (gap closes, Jun-30 held)', () => {
-    expect(at('day-32')).toEqual([32, '2026-06-10']); // Jun-10 gap closes
-    expect(at('day-33')).toEqual([33, '2026-06-11']);
-    expect(at('day-35')).toEqual([34, '2026-06-12']); // file day-35 → #34
-    expect(at('day-36')).toEqual([35, '2026-06-13']); // file day-36 → #35
-    expect(at('day-34')).toEqual([36, '2026-06-30']); // file day-34 → #36 (held)
+  it('every released day (1..22) keeps a stable numeric save key', () => {
+    for (const [day, slug] of FROZEN) {
+      if (day <= 22) {
+        expect([slug, idFromSlug(slug)], `released day ${day}`).toEqual([`day-${day}`, String(day)]);
+      }
+    }
+  });
+});
+
+describe('idFromSlug', () => {
+  it('collapses a legacy day-N slug to the bare number (live save key)', () => {
+    expect(idFromSlug('day-1')).toBe('1');
+    expect(idFromSlug('day-22')).toBe('22');
+    expect(idFromSlug('day-100')).toBe('100');
+  });
+
+  it('uses an author slug verbatim as its own id', () => {
+    expect(idFromSlug('tqbf-1')).toBe('tqbf-1');
+    expect(idFromSlug('rob-tetrel-2')).toBe('rob-tetrel-2');
+    expect(idFromSlug('bojanrajkovic-1')).toBe('bojanrajkovic-1');
+  });
+
+  it('only collapses an EXACT ^day-N$ match, never a handle that starts with "day"', () => {
+    expect(idFromSlug('day-1-extra')).toBe('day-1-extra');
+    expect(idFromSlug('dayton-3')).toBe('dayton-3');
+    expect(idFromSlug('day-')).toBe('day-');
   });
 });
