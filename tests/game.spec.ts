@@ -1,6 +1,6 @@
 import { test, expect, Page } from '@playwright/test';
 import { puzzles } from './helpers/puzzles';
-import { APP_URL, gotoDay, openPicker, groupByTheme, readTrackIds, selectIds } from './helpers/game';
+import { APP_URL, gotoDay, gotoDayUnlocked, openPicker, groupByTheme, readTrackIds, selectIds } from './helpers/game';
 
 test.describe('Audio Connections — Day 1 gameplay', () => {
   test.beforeEach(async ({ page }) => {
@@ -331,6 +331,37 @@ test.describe('Audio Connections — Konami unlock', () => {
     // Status should not contain "Konami" — it might still hold a load message
     // or be empty, but not the unlock string.
     await expect(page.getByTestId('status')).not.toContainText(/Konami/);
+  });
+});
+
+test.describe('Audio Connections — future-day state is ephemeral', () => {
+  // The soonest unreleased day, resolved at test time so this tracks the live
+  // calendar rather than a baked-in number. Konami unlocks it for play, but
+  // anything done there must NOT be persisted: we don't trust future ordering
+  // until a puzzle ships, so a save under its key could be restored onto a
+  // different puzzle after a reshuffle.
+  const futureDay = puzzles
+    .filter((p) => p.releaseAt && new Date(p.releaseAt).getTime() > Date.now())
+    .sort((a, b) => a.day - b.day)[0];
+
+  test('playing a Konami-unlocked future day writes no save', async ({ page }) => {
+    test.skip(!futureDay, 'no future days in the current calendar');
+    await gotoDayUnlocked(page, futureDay!.day);
+    await expect(page.getByTestId('puzzle-heading')).toHaveText(
+      `Audio Connections ${futureDay!.day}`,
+    );
+
+    // Make a guess — this mutates session state and fires the persist effect,
+    // which the released-only gate should turn into a no-op for a future day.
+    const ids = await readTrackIds(page);
+    await selectIds(page, ids.slice(0, 4));
+    await page.getByTestId('submit-btn').click();
+    await expect(page.locator('.mistake-dot.used, [data-testid^="solved-row-"]').first()).toBeVisible();
+
+    // Nothing was written under the future day's save key.
+    const saveKey = `audio-connections:day:${futureDay!.id}`;
+    const stored = await page.evaluate((k) => localStorage.getItem(k), saveKey);
+    expect(stored).toBeNull();
   });
 });
 
