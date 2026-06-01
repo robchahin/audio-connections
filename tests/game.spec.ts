@@ -473,10 +473,15 @@ test.describe('Audio Connections — cold load default day', () => {
   })();
 
   /** Build a minimal valid PersistedGameState. Only the fields the cold-load
-   *  heuristic reads (solvedThemes.length, mistakes) need realistic values. */
-  function persistedState(opts: { day: number; solvedThemes: number[]; mistakes: number; gameOver: boolean }) {
+   *  heuristic reads (solvedThemes.length, mistakes) need realistic values.
+   *  Pass `id` for a reslugged day (e.g. bojanrajkovic-1) so the record's
+   *  identity matches its save key — storage's loadState rejects a record whose
+   *  `id ?? String(day)` doesn't equal the key it's read under, so a numeric
+   *  fallback would be discarded for an author-slug day. */
+  function persistedState(opts: { day: number; id?: string; solvedThemes: number[]; mistakes: number; gameOver: boolean }) {
     return {
       __v: 1,
+      ...(opts.id !== undefined ? { id: opts.id } : {}),
       day: opts.day,
       selected: [],
       solvedThemes: opts.solvedThemes,
@@ -531,7 +536,12 @@ test.describe('Audio Connections — cold load default day', () => {
     await seedCurrentDay(page, 1);
     await seedStorage(page, {
       'audio-connections:day:1': persistedState({ day: 1, solvedThemes: [0, 1, 2, 3], mistakes: 0, gameOver: true }),
-      [`audio-connections:day:${latest.day}`]: persistedState({ day: latest.day, solvedThemes: [0], mistakes: 0, gameOver: false }),
+      // Key off latest.id, not the day number: once the latest day is a
+      // reslugged author file (e.g. day 23 = bojanrajkovic-1) its save key is
+      // the slug, not String(day), so a numeric key would miss and the app
+      // would treat the latest as fresh — flipping this assertion at the
+      // calendar boundary. (Day 1 keys to "1" either way.)
+      [`audio-connections:day:${latest.id}`]: persistedState({ day: latest.day, id: latest.id, solvedThemes: [0], mistakes: 0, gameOver: false }),
     });
     await page.goto(APP_URL);
     await expect(page.getByTestId('puzzle-heading')).toHaveText('Audio Connections 1');
