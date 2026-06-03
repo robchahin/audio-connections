@@ -13,6 +13,7 @@
     "test": "playwright test",
     "test:unit": "vitest run",
     "test:itunes": "vitest run --config vitest.itunes.config.ts",
+    "test:itunes:all": "ITUNES_CHECK_SCOPE=all vitest run --config vitest.itunes.config.ts",
     "test:watch": "vitest",
     "test:past-days": "node scripts/check-past-days.ts",
     "backlog:preview": "node scripts/schedule-preview.ts --backlog-only",

@@ -18,7 +18,8 @@ npm run dev            Run the dev server (Vite, http://localhost:5173).
 npm run build          Typecheck + production build.
 npm run typecheck      TypeScript check only, no build.
 npm run test:unit      Vitest, offline. ~10s. Pure logic + puzzle data shape.
-npm run test:itunes    Vitest with the iTunes config. ~10-20s. Hits the iTunes API.
+npm run test:itunes    Vitest with the iTunes config. Hits the iTunes API for changed puzzle files.
+npm run test:itunes:all Full-fleet iTunes sweep for maintainer/catalog drift checks.
 npm test               Playwright end-to-end. ~30-60s. Boots dev server, drives Chromium.
 npm run validate       Composite for puzzle authors: npm run typecheck + test:unit + test:itunes + test:past-days.
 npm run test:past-days Fails if you moved an already-released puzzle (reorder/rename/re-date). Diffs against origin/main.
@@ -37,7 +38,7 @@ Three runners cover different surface areas:
 | Runner | Discovers | What it catches |
 |---|---|---|
 | Vitest unit (`*.test.ts` in `src/`, excluding `*.itunes.test.ts`) | `npm run test:unit` | Pure logic; puzzle shape, day numbering, releaseAt validity |
-| Vitest iTunes (`*.itunes.test.ts` in `src/`) | `npm run test:itunes` | Every track ID resolves to a playable song (not an album, not dead) |
+| Vitest iTunes (`*.itunes.test.ts` in `src/`) | `npm run test:itunes` | Changed puzzle track IDs resolve to playable songs (not albums, not dead) |
 | Playwright (`*.spec.ts` in `tests/`) | `npm test` | End-to-end game behavior in a real browser |
 
 Files are routed to a runner by filename suffix and directory; see `vitest.config.ts`, `vitest.itunes.config.ts`, and `playwright.config.ts` for the exact globs.
@@ -46,11 +47,12 @@ Files are routed to a runner by filename suffix and directory; see `vitest.confi
 
 | Trigger | Runs |
 |---|---|
-| PR opened that touches a puzzle file (`src/puzzles/*.ts` except `template.ts`) | `test:unit` + `test:itunes` (after maintainer approves the environment gate) |
+| PR opened that touches a puzzle file (`src/puzzles/*.ts` except `template.ts`) | `test:unit` + `test:itunes` for changed puzzle files (after maintainer approves the environment gate) |
 | PR opened that touches `src/schedule.ts` or any puzzle file | Past-day guard (`test:past-days`) — fails if an already-released day was reordered, renamed, or re-dated |
 | PR opened that touches anything else | Nothing automated |
 | Push to `main` | `test:unit` + Playwright + build + deploy |
-| Push to `main` touching a puzzle file (`src/puzzles/*.ts` except `template.ts`) | Above + `test:itunes` post-merge sweep |
+| Push to `main` touching a puzzle file (`src/puzzles/*.ts` except `template.ts`) | Above + `test:itunes` for pushed puzzle files |
+| Scheduled or maintainer-invoked catalog drift check | `test:itunes:all` full-fleet sweep |
 
 The "PR opened touching anything else → nothing" row is the gap. **If you're touching site code, run tests locally before merging.**
 
@@ -77,6 +79,7 @@ If you need to run a subset of tests:
 npm run typecheck      # Always
 npm run test:unit      # Always
 npm run test:itunes    # If you touched any puzzle file
+npm run test:itunes:all # Maintainer-only full-fleet catalog sweep
 npm test               # If you touched UI, game logic, or anything in tests/
 ```
 

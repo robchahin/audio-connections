@@ -6,8 +6,8 @@ import { configDefaults, defineConfig } from 'vitest/config';
 // The split `include` / file-suffix convention keeps each runner from
 // trying to execute the other's files. `*.itunes.test.ts` is the
 // network-touching iTunes check — excluded here so `npm run test:unit`
-// stays offline; run it via `npm run test:itunes` (its own config) or the
-// path-filtered GitHub workflow that fires on puzzle-file changes.
+// stays offline; run changed-file validation via `npm run test:itunes`
+// or the deliberate full-fleet sweep via `npm run test:itunes:all`.
 export default defineConfig({
   test: {
     include: ['src/**/*.test.ts'],
