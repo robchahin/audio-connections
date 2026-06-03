@@ -167,19 +167,25 @@ export const LAUNCH_EPOCH = '2026-05-10'; // day 1's date (anchor)
 export type ScheduleEntry = string | { slug: string; date: string };
 
 export const schedule: ScheduleEntry[] = [
-  'day-1', 'day-2', /* … released prefix, kept as day-N ids … */ 'day-20',
+  { slug: 'day-1', date: '2026-05-10' },
+  { slug: 'day-2', date: '2026-05-11' },
+  /* … released prefix, kept as day-N ids … */
   // ── cutover ──
-  'farana-1',
-  'farana-2',
-  'tqbf-1',
+  { slug: 'farana-1', date: '2026-06-03' },
+  { slug: 'farana-2', date: '2026-06-11' },
+  { slug: 'tqbf-1', date: '2026-06-13' },
   // … backlog gets slotted here, in separate scheduling commits …
-  { slug: 'tqbf-2', date: '2026-06-30' }, // the rare held date (out-of-band request)
+  { slug: 'tqbf-2', date: '2026-06-30' }, // held date (out-of-band request)
 ];
 ```
 
-- **Order is authored; numbers and dates are derived** from it.
-- A bare `'slug'` is auto-dated; `{ slug, date }` pins a specific calendar day
-  (rare; requested out-of-band via DM/PR text, recorded here by the maintainer).
+- **Calendar membership is authored; numbers are derived** from it.
+- The resolver still supports a bare `'slug'` compact form for auto-dated test
+  fixtures and historical migrations, but the live schedule is intentionally
+  fully date-explicit so maintainers do not need to infer dates from
+  `LAUNCH_EPOCH`, list length, and any held dates.
+- `{ slug, date }` pins a specific calendar day. Multiple pinned rows may share
+  one date when the maintainer intentionally ships two puzzles on the same day.
 - **Membership in this list is what makes a puzzle live.** A file present in
   `src/puzzles/` but absent from the schedule is valid and simply does not
   appear — this is the **backlog / parking lot** (see Workflow & Reshuffling).
@@ -268,8 +274,7 @@ arranging the queue. Today these are fused; separating them is the point.
   schedule) — accepted but not yet live.
 
 **Scheduling (maintainer, separate commit)**
-- When arranging the queue, append/insert slugs into `src/schedule.ts` and pin
-  the rare held date.
+- When arranging the queue, add dated rows to `src/schedule.ts`.
 - This commit is the *only* place a number/date comes into existence.
 - Decouples *acceptance* from *scheduling*: good puzzles can sit in the backlog
   indefinitely; a busy week delays scheduling, not merging.
@@ -307,16 +312,17 @@ into "the next good day."
 ## Reshuffling future puzzles
 
 Reshuffles ("a song was pulled from iTunes", "two themes clash, space them out",
-"push the tail back a day") become **one-line edits to the schedule**, because
-auto-dating (`prev + 1`) means reordering/removing one slug re-dates the entire
-tail automatically. This is the second reason to keep dates implicit with only
-rare pins — all-explicit dates would turn every reshuffle into an N-line churn.
+"push the tail back a day") stay schedule-only edits. After the backlog split,
+the live schedule can be kept shallow, so the maintainability trade-off flips:
+explicit dates are worth the small extra editing cost because a maintainer can
+read the calendar directly instead of deriving dates from `LAUNCH_EPOCH`, list
+length, and held-date pins.
 
 Supporting changes, by phase:
 
 - **Parking lot (Phase 1, part of core).** Dir-presence ≠ scheduled. Pull a
   puzzle whose song died by removing its slug from the schedule; the file stays
-  for later repair; everything after shifts up a day. No deletion, no
+  for later repair; later dated rows can be adjusted deliberately if needed. No deletion, no
   renumbering.
 - **`schedule:preview` dry-run (Phase 1).** Print the resolved table
   (`slug → day → date`) plus warnings, so a reshuffle is *visible before
@@ -347,7 +353,8 @@ clock (it is a check, not the derivation):
 
 1. Every scheduled slug has a file; report files in neither schedule nor a
    recognised backlog state (orphan detection).
-2. No two pins share a date (resolver guarantees the rest are unique).
+2. No accidental date collisions; shared dates are allowed only when every entry
+   on that date is explicit, which records an intentional two-puzzle day.
 3. **Frozen released prefix:** for every already-released puzzle, derived
    `day` and `releaseAt` equal its historical values (guards live save keys at
    cutover).
@@ -396,9 +403,10 @@ reslug set against a future cutover date, not this snapshot.**
 6. **`currentDay` pointer** stores the stable id, not the display number.
 7. **Reslug all unreleased** (chosen scope) past the cutover to author slugs via
    `git mv`; keep the released prefix (and anything imminent) as `day-N`. Seed
-   the schedule: released prefix as `day-N` ids, then the reslugged tail in the
-   intended order, with `tqbf-2` pinned to `2026-06-30`. This also
-   untangles 33–39 for free (none released yet). **The exact cutover day is TBD**
+   the schedule with explicit dated rows: released prefix as `day-N` ids, then
+   the reslugged tail on its intended calendar days, including `tqbf-2` on
+   `2026-06-30`. This also untangles 33–39 for free (none released yet).
+   **The exact cutover day is TBD**
    — this won't ship for a couple of days, so compute the released/reslug split
    against the actual deploy date, not 2026-05-29; anything that will have
    released by deploy stays `day-N`.

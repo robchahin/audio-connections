@@ -15,10 +15,17 @@ export type { PuzzleContent };
 /** Date of day 1 — the anchor every auto-assigned date counts from. */
 export const LAUNCH_EPOCH = '2026-05-10';
 
-/** A schedule slot. A bare string auto-dates (previous slot's date + 1 day);
- *  the object form pins a specific calendar date (rare — honoured out-of-band
- *  date requests, or the resume date after a deliberate pause). */
-export type ScheduleEntry = string | { slug: string; date: string };
+/** A schedule slot pinned to a specific calendar day. */
+export interface PinnedScheduleEntry {
+  slug: string;
+  date: string;
+}
+
+/** A schedule slot. The resolver still supports the legacy compact form where
+ *  a bare string auto-dates from the previous entry, but the live schedule below
+ *  deliberately uses only pinned entries so maintainers can read the calendar
+ *  without doing epoch/list-length arithmetic in their heads. */
+export type ScheduleEntry = string | PinnedScheduleEntry;
 
 /** A puzzle once the schedule has given it a position in time. */
 export interface ResolvedPuzzle {
@@ -166,9 +173,9 @@ export function resolve(
   });
 }
 
-/** The live schedule — the single source of truth for ORDER. The loader
- *  (puzzles.ts) feeds this to resolve() to derive each puzzle's number and
- *  date; the puzzle FILES carry content only and decide neither.
+/** The live schedule — the maintainer-owned calendar. The loader (puzzles.ts)
+ *  feeds this to resolve() to derive each puzzle's number and release timestamp;
+ *  the puzzle FILES carry content only and decide neither.
  *
  *  Slugs are the file stems in src/puzzles/. Identity is the stem, not the
  *  number — a file's name is fixed for life while its display number is derived
@@ -177,20 +184,47 @@ export function resolve(
  *  slugs (`<github-handle>-N`), which become their save keys via idFromSlug.
  *  NEVER rename a released day's file — it orphans every player's save.
  *
- *  Dates auto-flow as previous + 1 day from LAUNCH_EPOCH, so a contiguous run
- *  needs no dates at all. The only pin is the held Jun-30 date for `tqbf-2`;
- *  listing it LAST means its derived number (rank by date) also comes last,
- *  and the old 34/35/36 inversion is unrepresentable. New puzzles append
- *  as bare entries. */
-export const schedule: ScheduleEntry[] = [
-  'day-1', 'day-2', 'day-3', 'day-4', 'day-5', 'day-6', 'day-7', 'day-8',
-  'day-9', 'day-10', 'day-11', 'day-12', 'day-13', 'day-14', 'day-15', 'day-16',
-  'day-17', 'day-18', 'day-19', 'day-20', 'day-21', 'day-22',
-  'bojanrajkovic-1', 'klobucar-1', 'farana-1', 'rob-tetrel-1', 'robchahin-1',
-  'klobucar-2', 'gitblight1-1', 'rob-tetrel-2', 'bojanrajkovic-2', 'klobucar-3',
-  'farana-2', 'farana-3', 'tqbf-1',
-  'bojanrajkovic-3',
-  { slug: 'tqbf-2', date: '2026-06-30' }, // held date — de-tangles the tail
+ *  Every live row has an explicit date. That makes schedule edits local and
+ *  auditable: slot a backlog puzzle by choosing its date here, then run
+ *  `npm run schedule:preview` to verify the derived day number and warnings. */
+export const schedule: PinnedScheduleEntry[] = [
+  { slug: 'day-1', date: '2026-05-10' },
+  { slug: 'day-2', date: '2026-05-11' },
+  { slug: 'day-3', date: '2026-05-12' },
+  { slug: 'day-4', date: '2026-05-13' },
+  { slug: 'day-5', date: '2026-05-14' },
+  { slug: 'day-6', date: '2026-05-15' },
+  { slug: 'day-7', date: '2026-05-16' },
+  { slug: 'day-8', date: '2026-05-17' },
+  { slug: 'day-9', date: '2026-05-18' },
+  { slug: 'day-10', date: '2026-05-19' },
+  { slug: 'day-11', date: '2026-05-20' },
+  { slug: 'day-12', date: '2026-05-21' },
+  { slug: 'day-13', date: '2026-05-22' },
+  { slug: 'day-14', date: '2026-05-23' },
+  { slug: 'day-15', date: '2026-05-24' },
+  { slug: 'day-16', date: '2026-05-25' },
+  { slug: 'day-17', date: '2026-05-26' },
+  { slug: 'day-18', date: '2026-05-27' },
+  { slug: 'day-19', date: '2026-05-28' },
+  { slug: 'day-20', date: '2026-05-29' },
+  { slug: 'day-21', date: '2026-05-30' },
+  { slug: 'day-22', date: '2026-05-31' },
+  { slug: 'bojanrajkovic-1', date: '2026-06-01' },
+  { slug: 'klobucar-1', date: '2026-06-02' },
+  { slug: 'farana-1', date: '2026-06-03' },
+  { slug: 'rob-tetrel-1', date: '2026-06-04' },
+  { slug: 'robchahin-1', date: '2026-06-05' },
+  { slug: 'klobucar-2', date: '2026-06-06' },
+  { slug: 'gitblight1-1', date: '2026-06-07' },
+  { slug: 'rob-tetrel-2', date: '2026-06-08' },
+  { slug: 'bojanrajkovic-2', date: '2026-06-09' },
+  { slug: 'klobucar-3', date: '2026-06-10' },
+  { slug: 'farana-2', date: '2026-06-11' },
+  { slug: 'farana-3', date: '2026-06-12' },
+  { slug: 'tqbf-1', date: '2026-06-13' },
+  { slug: 'bojanrajkovic-3', date: '2026-06-14' },
+  { slug: 'tqbf-2', date: '2026-06-30' }, // held date (author request)
   { slug: 'bojanrajkovic-4', date: '2026-07-14' }, // held date (author request)
 ];
 

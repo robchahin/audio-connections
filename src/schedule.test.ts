@@ -222,6 +222,22 @@ describe('the live schedule resolves the current catalogue', () => {
     expect(new Set(keys).size).toBe(keys.length);
   });
 
+  it('keeps the authored live schedule date-explicit', () => {
+    for (const e of liveSchedule) {
+      expect(typeof e).toBe('object');
+    }
+    const bySlug = new Map(out.map((p) => [p.slug, p.date]));
+    for (const e of liveSchedule) {
+      expect(bySlug.get(e.slug), e.slug).toBe(e.date);
+    }
+  });
+
+  it('keeps the authored live schedule in calendar order', () => {
+    for (let i = 1; i < liveSchedule.length; i++) {
+      expect(liveSchedule[i]!.date >= liveSchedule[i - 1]!.date).toBe(true);
+    }
+  });
+
   // The orphaned-saves guard for the released back-catalogue. Each legacy
   // `day-N` file is a puzzle that shipped before the slug migration, so live
   // players hold saves under the bare numeric key 'N'. That key is

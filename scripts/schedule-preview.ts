@@ -1,9 +1,8 @@
 // schedule:preview — print the resolved schedule as a dated, numbered table
 // plus maintainer warnings (thin runway, calendar gaps, a run-dry queue).
 //
-// The schedule file lists only slugs in order; this is how a maintainer SEES
-// what those resolve to — each puzzle's day number and release date — without
-// reverse-engineering them from the epoch + list position. Read-only.
+// The schedule file is an explicit calendar; this is how a maintainer verifies
+// the derived day numbers, release dates, backlog count, and warnings. Read-only.
 //
 // Runs on plain Node via native TS type-stripping (no tsx). The analysis it
 // renders, previewWarnings(), is pure and unit-tested in src/schedule.test.ts;
@@ -48,7 +47,7 @@ function printBacklog(): void {
 
   console.log(`\nBacklog — ${backlog.length} unscheduled puzzle file(s):`);
   for (const slug of backlog) console.log(`  ${slug}.ts`);
-  console.log(`\nTo schedule one, add its slug to src/schedule.ts and re-run npm run schedule:preview.\n`);
+  console.log(`\nTo schedule one, add a dated row to src/schedule.ts and re-run npm run schedule:preview.\n`);
 }
 
 if (BACKLOG_ONLY) {

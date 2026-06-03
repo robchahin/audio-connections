@@ -65,7 +65,7 @@ Use:
 npm run backlog:preview
 ```
 
-That prints the unscheduled puzzle list. To move a backlog puzzle onto the calendar, add its slug to `schedule` in `src/schedule.ts` in the desired position. Use a bare slug for the next auto-dated slot, or `{ slug: 'name-1', date: 'YYYY-MM-DD' }` for a pinned date. Re-run `npm run schedule:preview` to confirm the day/date, then run the normal validation commands.
+That prints the unscheduled puzzle list. To move a backlog puzzle onto the calendar, add a dated row like `{ slug: 'name-1', date: 'YYYY-MM-DD' }` to `schedule` in `src/schedule.ts`. Re-run `npm run schedule:preview` to confirm the derived day number, date, and warnings, then run the normal validation commands.
 
 ## Pre-merge checklist
 
