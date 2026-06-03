@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { puzzles } from './puzzles';
+import { backlogPuzzles, puzzles } from './puzzles';
 
 // Network-dependent: confirms every iTunes ID across the puzzle fleet resolves
 // to a playable song track — catches a collectionId pasted in place of a
@@ -17,9 +17,12 @@ interface ITunesResult {
   previewUrl?: string;
 }
 
-const allIds = [
-  ...new Set(puzzles.flatMap((p) => p.themes.flatMap((t) => t.tracks.map((tr) => tr.id)))),
+const puzzleFiles = [
+  ...puzzles.map((p) => ({ label: `day ${p.day}`, themes: p.themes })),
+  ...backlogPuzzles.map((p) => ({ label: `backlog ${p.slug}`, themes: p.themes })),
 ];
+
+const allIds = [...new Set(puzzleFiles.flatMap((p) => p.themes.flatMap((t) => t.tracks.map((tr) => tr.id))))];
 
 describe('iTunes IDs resolve to playable song tracks', () => {
   it(
@@ -41,12 +44,12 @@ describe('iTunes IDs resolve to playable song tracks', () => {
 
       // Map every ID back to the track that uses it so failures name the
       // artist/title/day, not just an opaque ID.
-      const trackById = new Map<number, { day: number; artist: string; title: string }>();
-      for (const p of puzzles) {
+      const trackById = new Map<number, { label: string; artist: string; title: string }>();
+      for (const p of puzzleFiles) {
         for (const theme of p.themes) {
           for (const t of theme.tracks) {
             if (!trackById.has(t.id)) {
-              trackById.set(t.id, { day: p.day, artist: t.artist, title: t.title });
+              trackById.set(t.id, { label: p.label, artist: t.artist, title: t.title });
             }
           }
         }
@@ -58,7 +61,7 @@ describe('iTunes IDs resolve to playable song tracks', () => {
       for (const id of allIds) {
         const ctx = trackById.get(id);
         const label = ctx
-          ? `day ${ctx.day} id ${id} (${ctx.artist} — ${ctx.title})`
+          ? `${ctx.label} id ${id} (${ctx.artist} — ${ctx.title})`
           : `id ${id}`;
 
         const asTrack = results.find((r) => r.wrapperType === 'track' && r.trackId === id);

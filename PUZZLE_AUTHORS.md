@@ -29,7 +29,7 @@ Each puzzle lives in its own file under `src/puzzles/`, named for you: `src/puzz
 
 ## Scheduling your puzzle
 
-The puzzle file holds **only the puzzle content** - the day number and release date aren't in it. A maintainer slots your puzzle into the schedule (`src/schedule.ts`) when they merge it. This makes maintainers responsible for managing duplicates and collisions so you can focus on the puzzle. If you'd like your puzzle to land on a particular date (a birthday, a holiday tie-in), just say so in your PR and the maintainer can pin it.
+The puzzle file holds **only the puzzle content** - the day number and release date aren't in it. A maintainer slots your puzzle into the schedule (`src/schedule.ts`) when it's ready for the calendar; accepted puzzles can sit in the backlog first. Backlog puzzles are merged and reviewed, but they are hidden from the playable calendar until scheduled. This makes maintainers responsible for managing duplicates and collisions so you can focus on the puzzle. If you'd like your puzzle to land on a particular date (a birthday, a holiday tie-in), just say so in your PR and the maintainer can pin it.
 
 ### Finding iTunes IDs
 

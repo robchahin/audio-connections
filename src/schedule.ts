@@ -192,6 +192,21 @@ export const schedule: ScheduleEntry[] = [
   { slug: 'tqbf-2', date: '2026-06-30' }, // held date — de-tangles the tail
 ];
 
+/** Slugs for puzzle files that exist but are not scheduled yet. These are
+ *  valid merged backlog entries: they are reviewed and proximity-checked once
+ *  slotted, but they do not get a day/date or appear in the playable calendar. */
+export function findBacklogSlugs(
+  allSlugs: Iterable<string>,
+  entries: readonly ScheduleEntry[] = schedule,
+): string[] {
+  const scheduled = new Set(entries.map(entrySlug));
+  const backlog = new Set<string>();
+  for (const slug of allSlugs) {
+    if (!scheduled.has(slug)) backlog.add(slug);
+  }
+  return [...backlog].sort((a, b) => a.localeCompare(b));
+}
+
 /** Save-key identity from a slug. A legacy `day-N` slug collapses to the bare
  *  number string so existing saves (keyed `audio-connections:day:21`) keep
  *  working untouched; any other slug is its own id. Exact `^day-N$` match only,

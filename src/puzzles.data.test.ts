@@ -1,7 +1,8 @@
 import { readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { puzzles } from './puzzles';
+import { backlogPuzzles, puzzles } from './puzzles';
+import { findBacklogSlugs, schedule } from './schedule';
 
 // Integrity checks over the puzzle data files. These used to live in
 // tests/puzzles.spec.ts under Playwright; they touch no DOM, so they belong in
@@ -10,14 +11,16 @@ import { puzzles } from './puzzles';
 // named, per-day assertions and clearer failure messages.
 
 const puzzleDir = fileURLToPath(new URL('./puzzles', import.meta.url));
+const puzzleFiles = [
+  ...puzzles.map((p) => ({ label: `day ${p.day}`, content: p })),
+  ...backlogPuzzles.map((p) => ({ label: `backlog ${p.slug}`, content: p })),
+];
 
 describe('every puzzle has the required shape', () => {
-  // One case per day so a malformed file fails by name. Stronger than
+  // One case per file so a malformed file fails by name. Stronger than
   // validatePuzzle in puzzles.ts, which only checks artist/title are strings —
   // here they must also be non-empty.
-  it.each(puzzles)('day $day — 4 themes, 4 tracks each, required fields', (p) => {
-    expect(typeof p.day, 'day').toBe('number');
-    expect(p.date, 'date').toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  it.each(puzzleFiles)('$label — 4 themes, 4 tracks each, required fields', ({ content: p }) => {
     expect(p.author.trim().length, 'author is non-empty').toBeGreaterThan(0);
 
     expect(p.themes, 'exactly 4 themes').toHaveLength(4);
@@ -52,9 +55,11 @@ describe('puzzle calendar', () => {
     }
   });
 
-  it('every puzzle file is loaded into the puzzles array', () => {
+  it('every valid puzzle file is either scheduled or in the backlog', () => {
     const files = readdirSync(puzzleDir).filter((f) => f !== 'template.ts' && SLUG_FILE_RE.test(f));
-    expect(puzzles.length).toBe(files.length);
+    const slugs = files.map((f) => f.replace(/\.ts$/, ''));
+    expect(backlogPuzzles.map((p) => p.slug)).toEqual(findBacklogSlugs(slugs, schedule));
+    expect(puzzles.length + backlogPuzzles.length).toBe(files.length);
   });
 
   it('each puzzle has a unique day number', () => {
