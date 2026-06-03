@@ -110,5 +110,6 @@ describe('puzzle calendar', () => {
   });
 });
 
-// The iTunes-network check lives in src/puzzles.itunes.test.ts, run via
-// `npm run test:itunes` and the dedicated path-filtered GitHub workflow.
+// The iTunes-network check lives in src/puzzles.itunes.test.ts. By default
+// `npm run test:itunes` checks changed puzzle files; `npm run test:itunes:all`
+// deliberately sweeps the full archive for catalog drift.
