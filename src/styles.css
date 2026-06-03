@@ -1624,10 +1624,10 @@ h1 {
   cursor: not-allowed;
 }
 
-/* today-ring overlay: applied when isToday=true and the chip isn't already
-   the solid "today" style (e.g. today AND in-progress). Drawn as an inset
+/* selected-ring overlay: applied when a chip is the one currently being
+   viewed and it isn't already the solid "today" style. Drawn as an inset
    shadow so it doesn't change the layout box. */
-.day-chip-today-ring {
+.day-chip-selected-ring {
   box-shadow: inset 0 0 0 2px var(--day-today);
 }
 

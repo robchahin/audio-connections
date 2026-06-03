@@ -6,7 +6,7 @@ export type DayChipSize = 'sm' | 'md' | 'lg';
 interface DayChipProps {
   day: number;
   status: DayStatus;
-  isToday?: boolean;
+  isSelected?: boolean;
   mistakes?: number;
   size?: DayChipSize;
   onClick?: () => void;
@@ -24,7 +24,7 @@ export const DayChip = forwardRef<HTMLButtonElement, DayChipProps>(function DayC
   {
     day,
     status,
-    isToday = false,
+    isSelected = false,
     mistakes = 0,
     size = 'md',
     onClick,
@@ -40,7 +40,7 @@ export const DayChip = forwardRef<HTMLButtonElement, DayChipProps>(function DayC
     'day-chip',
     `day-chip-${size}`,
     `day-chip-${status}`,
-    isToday && status !== 'today' && 'day-chip-today-ring',
+    isSelected && status !== 'today' && 'day-chip-selected-ring',
     isStatic && 'day-chip-static',
   ]
     .filter(Boolean)
