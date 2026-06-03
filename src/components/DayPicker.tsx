@@ -5,6 +5,7 @@ import { DayChip } from './DayChip';
 
 interface DayPickerProps {
   days: DayState[];
+  currentDay: number;
   open: boolean;
   onClose: () => void;
   onSelect: (day: number) => void;
@@ -52,9 +53,14 @@ function hideFutureLocked(days: DayState[]): DayState[] {
   });
 }
 
+function chipStatus(day: DayState): DayStatus {
+  if (day.status === 'today') return 'unplayed';
+  return day.status;
+}
+
 const GRID_COLS = 7;
 
-export function DayPicker({ days, open, onClose, onSelect }: DayPickerProps) {
+export function DayPicker({ days, currentDay, open, onClose, onSelect }: DayPickerProps) {
   const [sort, setSort] = useState<SortMode>(loadSort);
   const panelRef = useRef<HTMLDivElement>(null);
   const closeBtnRef = useRef<HTMLButtonElement>(null);
@@ -196,19 +202,24 @@ export function DayPicker({ days, open, onClose, onSelect }: DayPickerProps) {
 
         <div className="day-picker-grid" data-testid="day-picker-grid">
           {sortedDays.map((d, i) => (
-            <DayChip
-              key={d.day}
-              ref={(el) => { chipRefs.current[i] = el; }}
-              day={d.day}
-              status={d.status}
-              mistakes={d.mistakes}
-              isToday={d.isToday}
-              size="lg"
-              onClick={() => handlePick(d.day, d.status)}
-              onKeyDown={(e) => handleChipKey(e, i)}
-              ariaLabel={`Day ${d.day} — ${STATUS_LABEL[d.status]}${d.isToday ? ' (latest)' : ''}`}
-              title={d.status === 'locked' && d.releaseAt ? `Unlocks ${formatReleaseAt(d.releaseAt)}` : undefined}
-            />
+            (() => {
+              const displayStatus = chipStatus(d);
+              return (
+                <DayChip
+                  key={d.day}
+                  ref={(el) => { chipRefs.current[i] = el; }}
+                  day={d.day}
+                  status={displayStatus}
+                  mistakes={d.mistakes}
+                  isSelected={d.day === currentDay}
+                  size="lg"
+                  onClick={() => handlePick(d.day, d.status)}
+                  onKeyDown={(e) => handleChipKey(e, i)}
+                  ariaLabel={`Day ${d.day}${d.day === currentDay ? ' (selected)' : ''} — ${STATUS_LABEL[d.status]}${d.isToday ? ' (latest)' : ''}`}
+                  title={d.status === 'locked' && d.releaseAt ? `Unlocks ${formatReleaseAt(d.releaseAt)}` : undefined}
+                />
+              );
+            })()
           ))}
           {sortedDays.length === 0 && (
             <div style={{ gridColumn: '1 / -1', textAlign: 'center', color: 'var(--text-muted)', fontSize: 12, padding: '12px 0' }}>
@@ -219,7 +230,7 @@ export function DayPicker({ days, open, onClose, onSelect }: DayPickerProps) {
 
         <div className="day-picker-legend">
           {[
-            ['today', 'Latest'],
+            ['selected', 'Selected'],
             ['done', 'Solved'],
             ['doneMistakes', 'Solved with mistakes'],
             ['inProgress', 'In progress'],
@@ -228,7 +239,15 @@ export function DayPicker({ days, open, onClose, onSelect }: DayPickerProps) {
             ['locked', 'Locked'],
           ].map(([status, label]) => (
             <span key={status} className="day-picker-legend-item">
-              <DayChip day={0} status={status as DayStatus} mistakes={1} size="sm" showNumber={false} static />
+              <DayChip
+                day={0}
+                status={(status === 'selected' ? 'unplayed' : status) as DayStatus}
+                mistakes={1}
+                size="sm"
+                showNumber={false}
+                isSelected={status === 'selected'}
+                static
+              />
               {label}
             </span>
           ))}

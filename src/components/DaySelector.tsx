@@ -39,6 +39,7 @@ export function DaySelector({ days, todayDay, currentDay, onSwitch, compact = fa
       />
       <DayPicker
         days={days}
+        currentDay={currentDay}
         open={open}
         onClose={() => setOpen(false)}
         onSelect={onSwitch}
