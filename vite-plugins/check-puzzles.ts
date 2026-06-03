@@ -15,6 +15,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Plugin } from 'vite';
 import { findProximityWarnings, scheduledDates } from '../src/puzzles.proximity';
+import { findBacklogSlugs } from '../src/schedule';
 
 interface Options {
   /** Warn if the same iTunes id appears in two puzzles within this many days. */
@@ -43,7 +44,15 @@ function idsBySlug(dir: string): Map<string, number[]> {
 }
 
 function run(dir: string, warnDays: number, warn: (msg: string) => void): void {
-  const warnings = findProximityWarnings(idsBySlug(dir), scheduledDates(), warnDays);
+  const ids = idsBySlug(dir);
+  for (const slug of findBacklogSlugs(ids.keys())) {
+    warn(
+      `Puzzle file "${slug}.ts" is not in src/schedule.ts; treating as backlog ` +
+        `(hidden from the playable calendar until scheduled).`,
+    );
+  }
+
+  const warnings = findProximityWarnings(ids, scheduledDates(), warnDays);
   for (const w of warnings) {
     warn(
       `iTunes id ${w.id} reused: Day ${w.prev.day} (${w.prev.date}) → ` +

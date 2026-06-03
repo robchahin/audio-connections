@@ -9,7 +9,10 @@
 // renders, previewWarnings(), is pure and unit-tested in src/schedule.test.ts;
 // this wrapper just supplies the clock and formats the output.
 //   node scripts/schedule-preview.ts
+import { readdirSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import {
+  findBacklogSlugs,
   previewWarnings,
   resolve as resolveSchedule,
   schedule,
@@ -18,6 +21,8 @@ import {
 } from '../src/schedule.ts';
 
 const TODAY = new Date().toISOString().slice(0, 10); // UTC, matches schedule dates
+const PUZZLE_FILE_RE = /^[a-zA-Z0-9]+(?:-[a-zA-Z0-9]+)*\.ts$/;
+const BACKLOG_ONLY = process.argv.includes('--backlog-only');
 
 function stubContent(s: readonly ScheduleEntry[]): Map<string, PuzzleContent> {
   const m = new Map<string, PuzzleContent>();
@@ -25,12 +30,40 @@ function stubContent(s: readonly ScheduleEntry[]): Map<string, PuzzleContent> {
   return m;
 }
 
+function puzzleFileSlugs(): string[] {
+  const dir = fileURLToPath(new URL('../src/puzzles', import.meta.url));
+  return readdirSync(dir)
+    .filter((f) => f !== 'template.ts' && PUZZLE_FILE_RE.test(f))
+    .map((f) => f.replace(/\.ts$/, ''));
+}
+
 const resolved = resolveSchedule(schedule, stubContent(schedule));
+const backlog = findBacklogSlugs(puzzleFileSlugs(), schedule);
+
+function printBacklog(): void {
+  if (backlog.length === 0) {
+    console.log(`\nBacklog — none\n`);
+    return;
+  }
+
+  console.log(`\nBacklog — ${backlog.length} unscheduled puzzle file(s):`);
+  for (const slug of backlog) console.log(`  ${slug}.ts`);
+  console.log(`\nTo schedule one, add its slug to src/schedule.ts and re-run npm run schedule:preview.\n`);
+}
+
+if (BACKLOG_ONLY) {
+  console.log(`\nBacklog preview — ${backlog.length} unscheduled puzzle file(s)`);
+  printBacklog();
+  process.exit(0);
+}
 
 const slugWidth = Math.max(4, ...resolved.map((p) => p.slug.length));
 const rel = (date: string) => (date < TODAY ? 'released' : date === TODAY ? 'TODAY' : 'future');
 
-console.log(`\nSchedule preview — ${resolved.length} puzzles, today ${TODAY} (UTC)\n`);
+console.log(
+  `\nSchedule preview — ${resolved.length} scheduled puzzle(s), ` +
+    `${backlog.length} backlog, today ${TODAY} (UTC)\n`,
+);
 console.log(`  ${'day'.padStart(3)}  ${'slug'.padEnd(slugWidth)}  ${'date'.padEnd(10)}  status`);
 console.log(`  ${'─'.repeat(3)}  ${'─'.repeat(slugWidth)}  ${'─'.repeat(10)}  ──────`);
 for (const p of resolved) {
@@ -39,6 +72,8 @@ for (const p of resolved) {
     `${mark} ${String(p.day).padStart(3)}  ${p.slug.padEnd(slugWidth)}  ${p.date}  ${rel(p.date)}`,
   );
 }
+
+console.log(`\nBacklog: ${backlog.length} unscheduled puzzle file(s). Run npm run backlog:preview to list.`);
 
 const warnings = previewWarnings(resolved, TODAY);
 if (warnings.length === 0) {

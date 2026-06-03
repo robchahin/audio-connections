@@ -1,5 +1,5 @@
 import type { Puzzle, PuzzleContent } from './types';
-import { LAUNCH_EPOCH, idFromSlug, resolve, schedule } from './schedule';
+import { LAUNCH_EPOCH, findBacklogSlugs, idFromSlug, resolve, schedule } from './schedule';
 
 // idFromSlug is the slug→save-key derivation; it lives in schedule.ts (pure,
 // loader-free) so the schedule tests can assert save-key stability. Re-exported
@@ -100,14 +100,14 @@ for (const [path, mod] of Object.entries(modules)) {
   contentBySlug.set(slug, mod.default);
 }
 
-// Every file must be scheduled and vice-versa. Catches a new file nobody added
-// to the schedule (it would otherwise be silently invisible); resolve() throws
-// for the reverse (a scheduled slug with no file).
-const scheduledSlugs = new Set(schedule.map((e) => (typeof e === 'string' ? e : e.slug)));
-for (const slug of contentBySlug.keys()) {
-  if (!scheduledSlugs.has(slug)) {
-    throw new Error(`Puzzle file "${slug}.ts" exists but is not in the schedule (src/schedule.ts)`);
-  }
+export interface BacklogPuzzle {
+  /** File stem for an unscheduled puzzle waiting to be slotted. */
+  slug: string;
+  /** Stable save identity it will use once scheduled. */
+  id: string;
+  author: string;
+  constraint?: string;
+  themes: PuzzleContent['themes'];
 }
 
 // Derive number + date for every scheduled puzzle, then project back onto the
@@ -122,6 +122,17 @@ export const puzzles: Puzzle[] = resolved.map((r) => ({
   ...(r.content.constraint !== undefined ? { constraint: r.content.constraint } : {}),
   themes: r.content.themes,
 }));
+
+export const backlogPuzzles: BacklogPuzzle[] = findBacklogSlugs(contentBySlug.keys(), schedule).map((slug) => {
+  const content = contentBySlug.get(slug)!;
+  return {
+    slug,
+    id: idFromSlug(slug),
+    author: content.author,
+    ...(content.constraint !== undefined ? { constraint: content.constraint } : {}),
+    themes: content.themes,
+  };
+});
 export const MAX_MISTAKES = 4;
 export const THEME_EMOJI = ['🟨', '🟩', '🟦', '🟪'] as const;
 

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   LAUNCH_EPOCH,
   diffPastDays,
+  findBacklogSlugs,
   idFromSlug,
   previewWarnings,
   resolve,
@@ -269,6 +270,16 @@ describe('idFromSlug', () => {
     expect(idFromSlug('day-1-extra')).toBe('day-1-extra');
     expect(idFromSlug('dayton-3')).toBe('dayton-3');
     expect(idFromSlug('day-')).toBe('day-');
+  });
+});
+
+describe('findBacklogSlugs', () => {
+  it('reports puzzle files that are valid but not scheduled yet', () => {
+    expect(findBacklogSlugs(['a', 'b', 'c'], ['a', { slug: 'c', date: '2026-05-12' }])).toEqual(['b']);
+  });
+
+  it('sorts and de-duplicates backlog slugs for stable maintainer output', () => {
+    expect(findBacklogSlugs(['later', 'new', 'new', 'alpha'], ['later'])).toEqual(['alpha', 'new']);
   });
 });
 

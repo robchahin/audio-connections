@@ -22,7 +22,8 @@ npm run test:itunes    Vitest with the iTunes config. ~10-20s. Hits the iTunes A
 npm test               Playwright end-to-end. ~30-60s. Boots dev server, drives Chromium.
 npm run validate       Composite for puzzle authors: npm run typecheck + test:unit + test:itunes + test:past-days.
 npm run test:past-days Fails if you moved an already-released puzzle (reorder/rename/re-date). Diffs against origin/main.
-npm run schedule:preview  Print the resolved schedule (day → slug → date) plus warnings (thin runway, calendar gaps). Read-only.
+npm run schedule:preview  Print the resolved schedule, backlog count, and warnings (thin runway, calendar gaps). Read-only.
+npm run backlog:preview   Print the unscheduled puzzle backlog list and scheduling next step.
 ```
 
 `npm run setup` also points git at the committed `.githooks/` directory, installing a pre-commit hook that runs `test:past-days` when you stage `src/schedule.ts` or a puzzle file. It's a best-effort local mirror of CI — bypass a false alarm with `git commit --no-verify`.
@@ -52,6 +53,17 @@ Files are routed to a runner by filename suffix and directory; see `vitest.confi
 | Push to `main` touching a puzzle file (`src/puzzles/*.ts` except `template.ts`) | Above + `test:itunes` post-merge sweep |
 
 The "PR opened touching anything else → nothing" row is the gap. **If you're touching site code, run tests locally before merging.**
+
+## Puzzle backlog workflow
+
+A puzzle file under `src/puzzles/` does not need a matching `src/schedule.ts` entry to merge. If the file is valid but unscheduled, it is backlog: accepted content that is hidden from the playable calendar until a maintainer slots it.
+
+Use:
+```
+npm run backlog:preview
+```
+
+That prints the unscheduled puzzle list. To move a backlog puzzle onto the calendar, add its slug to `schedule` in `src/schedule.ts` in the desired position. Use a bare slug for the next auto-dated slot, or `{ slug: 'name-1', date: 'YYYY-MM-DD' }` for a pinned date. Re-run `npm run schedule:preview` to confirm the day/date, then run the normal validation commands.
 
 ## Pre-merge checklist
 
