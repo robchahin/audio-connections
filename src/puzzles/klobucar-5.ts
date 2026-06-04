@@ -9,7 +9,7 @@ const puzzle: PuzzleContent = {
         { id: 1440841256, artist: 'The Beach Boys', title: 'Sloop John B' },
         { id: 1440713347, artist: 'Styx', title: 'Come Sail Away' },
         { id: 1452841465, artist: 'The Lonely Island', title: "I'm On a Boat (feat. T-Pain)" },
-        { id: 1775785180, artist: 'Cate Le Bon', title: 'Harbour' },
+        { id: 1863565661, artist: 'Christopher Cross', title: 'Sailing' },
       ],
     },
     {
