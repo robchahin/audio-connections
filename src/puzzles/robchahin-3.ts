@@ -7,7 +7,7 @@ const puzzle: PuzzleContent = {
     {
       theme: 'Food',
       tracks: [
-        { id: 250495319, artist: '"Weird Al" Yankovic', title: 'Eat It' },
+        { id: 250493834, artist: '"Weird Al" Yankovic', title: 'Addicted to Spuds' },
         { id: 308442149, artist: '"Weird Al" Yankovic', title: 'My Bologna' },
         { id: 308442141, artist: '"Weird Al" Yankovic', title: 'I Love Rocky Road' },
         { id: 250500626, artist: '"Weird Al" Yankovic', title: 'Lasagna' },
